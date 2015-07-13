@@ -2,9 +2,9 @@ var scene, camera, renderer, controls, stats;
 var boxSize = 2000, skyBox;
 var planeY = -boxSize/2 ;
 var lastHour;
-var parent, sunLight, moonLight, spinRadius = boxSize;
+var parent, sunLight, moonLight, spinRadius = boxSize/2;
 var materialArray = [];
-var testCounter = 0;
+var testCounter = 240;
 var totalMinute = 1440;
 var starParticle;
 var cubeNumber =400;
@@ -74,22 +74,15 @@ $(document).ready(function(){
     //CONTROLS//
     ////////////
 
-    controls = new THREE.TrackballControls( camera, renderer.domElement );
-    controls.rotateSpeed = 1.0;
-    controls.zoomSpeed = 1.2;
-    controls.panSpeed = 0.2;
-     
-    controls.noZoom = false;
-    controls.noPan = false;
-     
-    controls.staticMoving = false;
-    controls.dynamicDampingFactor = 0.3;
-     
-    controls.minDistance = 0.1;
-    controls.maxDistance = 1000;
-     
-    controls.keys = [ 16, 17, 18 ]; // [ rotateKey, zoomKey, panKey ] 
-
+    controls = new THREE.FirstPersonControls(camera);
+    controls.lookSpeed = 0.05;
+    controls.movementSpeed = 20;
+    controls.noFly = true;
+    controls.lookVertical = true;
+    controls.constrainVertical = true;
+    controls.verticalMin = 1.0;
+    controls.verticalMax = 2.0;
+   
     ////////
     //axes//
     ////////
@@ -329,9 +322,10 @@ $(document).ready(function(){
     ///////////
     //animate//
     ///////////
-    
+    var clock = new THREE.Clock();
 
     var render = function () {
+        var delta = clock.getDelta();
 
         var now = new Date();
         var hours = now.getHours();
@@ -339,7 +333,7 @@ $(document).ready(function(){
 
         requestAnimationFrame( render );
         renderer.render(scene, camera);
-        controls.update(); //for cameras
+        controls.update(delta); //for cameras
 
         stats.update();
         /*                                                            //this comment can use to reflect real world day/night condition
