@@ -86,19 +86,19 @@ $(document).ready(function(){
     controls.dynamicDampingFactor = 0.3;
      
     controls.minDistance = 0.1;
-    controls.maxDistance = 20000;
+    controls.maxDistance = 1000;
      
     controls.keys = [ 16, 17, 18 ]; // [ rotateKey, zoomKey, panKey ] 
 
     ////////
     //axes//
     ////////
-
+/*
     axes = buildAxes( 2500 );
     scene.add(axes);
 
     
-
+*/
 
     ////////////
     //sunLight//
@@ -109,7 +109,7 @@ $(document).ready(function(){
  //   sunLight.position.multiplyScalar(1.3);
 
     sunLight.castShadow = true;
-    sunLight.shadowCameraVisible = true;
+   // sunLight.shadowCameraVisible = true;
 
     sunLight.shadowMapWidth = 2048;
     sunLight.shadowMapHeight = 2048;
@@ -138,7 +138,7 @@ $(document).ready(function(){
  //   moonLight.position.multiplyScalar(1.3);
 
     moonLight.castShadow = true;
-    moonLight.shadowCameraVisible = true;
+   // moonLight.shadowCameraVisible = true;
 
     moonLight.shadowMapWidth = 2048;
     moonLight.shadowMapHeight = 2048;
