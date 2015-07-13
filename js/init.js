@@ -57,7 +57,7 @@ $(document).ready(function(){
     info.style.backgroundColor = 'transparent';
     info.style.zIndex = '1';
     info.style.fontFamily = 'Monospace';
-    info.innerHTML = 'Drag mouse to rotate camera; Scroll to zoom';
+    info.innerHTML = 'Move mouse to rotate camera; WASD to move';
     document.body.appendChild( info );
 
     ////////
@@ -76,7 +76,7 @@ $(document).ready(function(){
 
     controls = new THREE.FirstPersonControls(camera);
     controls.lookSpeed = 0.05;
-    controls.movementSpeed = 20;
+    controls.movementSpeed = 40;
     controls.noFly = true;
     controls.lookVertical = true;
     controls.constrainVertical = true;
