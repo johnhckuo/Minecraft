@@ -15,7 +15,7 @@ Simulate Day/Night Transition in Minecraft
 git clone https://github.com/johnhckuo/Day-and-Night.git
 cd Day-and-Night
 
-# install required gems and dependencies
+# install required packages and dependencies
 npm install
 
 # build and run locally
