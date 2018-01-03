@@ -1,0 +1,22 @@
+{
+  "name": "day-night",
+  "version": "1.0.0",
+  "description": "Simulate day/night transition in Minecraft",
+  "main": "index.js",
+  "scripts": {
+    "start": "http-server ./ -c-1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/johnhckuo/Day-and-Night.git"
+  },
+  "keywords": [
+    "three.js"
+  ],
+  "author": "johnhckuo",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/johnhckuo/Day-and-Night/issues"
+  },
+  "homepage": "https://github.com/johnhckuo/Day-and-Night#readme"
+}
