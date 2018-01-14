@@ -4,18 +4,26 @@ THREE.ShaderLib["sky"] = {
     "secondLayer": {type:'c', value:null},
     "thirdLayer": {type:'c', value:null},
     "percentage": {type:'f', value:0.0},
-
-
   },
   vertexShader:[
     '#ifdef GL_ES',
     'precision mediump float;',
     '#endif',
+
     'varying vec2 uVu',
 
     'uniform vec3 firstLayer',
     'uniform vec3 secondLayer',
     'uniform vec3 thirdLayer',
+    'uniform vec3 fourthLayer',
+    'uniform vec3 fifthLayer',
+
+    'uniform float firstPosition',
+    'uniform float secondPosition',
+    'uniform float thirdPosition',
+    'uniform float fourthPosition',
+    'uniform float fifthPosition',
+
     'uniform float percentage',
 
     'void main(){',
@@ -30,6 +38,15 @@ THREE.ShaderLib["sky"] = {
     'uniform vec3 firstLayer',
     'uniform vec3 secondLayer',
     'uniform vec3 thirdLayer',
+    'uniform vec3 fourthLayer',
+    'uniform vec3 fifthLayer',
+
+    'uniform float firstPosition',
+    'uniform float secondPosition',
+    'uniform float thirdPosition',
+    'uniform float fourthPosition',
+    'uniform float fifthPosition',
+
     'uniform float percentage',
 
     'void main(){',
