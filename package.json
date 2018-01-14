@@ -18,5 +18,8 @@
   "bugs": {
     "url": "https://github.com/johnhckuo/Day-and-Night/issues"
   },
-  "homepage": "https://github.com/johnhckuo/Day-and-Night#readme"
+  "homepage": "https://github.com/johnhckuo/Day-and-Night#readme",
+  "devDependencies": {
+    "http-server": "^0.11.1"
+  }
 }
