@@ -1,5 +1,5 @@
-var scene, camera, renderer, controls, stats;    
-var boxSize = 2000, skyBox;
+var scene, camera, renderer, controls, stats;
+var boxSize = 2000;
 var planeY = -boxSize/2 ;
 var lastHour;
 var parent, sunLight, moonLight, spinRadius = boxSize/2;
@@ -9,6 +9,7 @@ var totalMinute = 1440;
 var starParticle;
 var cubeNumber =400;
 var originCube;
+var loader = new THREE.TextureLoader();
 $(document).ready(function(){
 
     var now = new Date();
@@ -23,7 +24,7 @@ $(document).ready(function(){
 
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 10000 );
     camera.position.z = -500;
-    camera.position.y = -800;
+    camera.position.y = 1000;
    // camera.position.y = -boxSize/2;
 
 
@@ -34,14 +35,9 @@ $(document).ready(function(){
     renderer = new THREE.WebGLRenderer();
     renderer.setSize( window.innerWidth, window.innerHeight );
     renderer.setClearColor(0xffffff, 1);
-    renderer.shadowMapEnabled = true;
+    renderer.shadowMap.enabled = true;
     renderer.shadowMapSoft = true;
     document.body.appendChild( renderer.domElement );
-
-    var geometry = new THREE.BoxGeometry( 1, 1, 1 );
-    var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-
-    
 
     ////////
     //info//
@@ -57,7 +53,7 @@ $(document).ready(function(){
     info.style.backgroundColor = 'transparent';
     info.style.zIndex = '1';
     info.style.fontFamily = 'Monospace';
-    info.innerHTML = 'Move mouse to rotate camera; WASD to move';
+    info.innerHTML = 'Drag to rotate camera';
     document.body.appendChild( info );
 
     ////////
@@ -74,24 +70,7 @@ $(document).ready(function(){
     //CONTROLS//
     ////////////
 
-    controls = new THREE.FirstPersonControls(camera);
-    controls.lookSpeed = 0.05;
-    controls.movementSpeed = 40;
-    controls.noFly = true;
-    controls.lookVertical = true;
-    controls.constrainVertical = true;
-    controls.verticalMin = 1.0;
-    controls.verticalMax = 2.0;
-   
-    ////////
-    //axes//
-    ////////
-/*
-    axes = buildAxes( 2500 );
-    scene.add(axes);
-
-    
-*/
+    controls = new THREE.OrbitControls( camera, renderer.domElement );
 
     ////////////
     //sunLight//
@@ -104,19 +83,17 @@ $(document).ready(function(){
     sunLight.castShadow = true;
    // sunLight.shadowCameraVisible = true;
 
-    sunLight.shadowMapWidth = 2048;
-    sunLight.shadowMapHeight = 2048;
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
 
     var sunlightRange = boxSize/2;
 
-    sunLight.shadowCameraLeft = -sunlightRange;
-    sunLight.shadowCameraRight = sunlightRange;
-    sunLight.shadowCameraTop = sunlightRange;
-    sunLight.shadowCameraBottom = -sunlightRange;
+    sunLight.shadow.camera.left = -sunlightRange;
+    sunLight.shadow.camera.right = sunlightRange;
+    sunLight.shadow.camera.top = sunlightRange;
+    sunLight.shadow.camera.bottom = -sunlightRange;
 
  //   sunLight.shadowCameraFar = 1000;
-    sunLight.shadowDarkness = 0.8;
-
     scene.add(sunLight);
 
 
@@ -133,19 +110,17 @@ $(document).ready(function(){
     moonLight.castShadow = true;
    // moonLight.shadowCameraVisible = true;
 
-    moonLight.shadowMapWidth = 2048;
-    moonLight.shadowMapHeight = 2048;
+    moonLight.shadow.mapSize.width = 2048;
+    moonLight.shadow.mapSize.height = 2048;
 
     var moonlightRange = boxSize/2;
 
-    moonLight.shadowCameraLeft = -moonlightRange;
-    moonLight.shadowCameraRight = moonlightRange;
-    moonLight.shadowCameraTop = moonlightRange;
-    moonLight.shadowCameraBottom = -moonlightRange;
+    moonLight.shadow.camera.left = -moonlightRange;
+    moonLight.shadow.camera.right = moonlightRange;
+    moonLight.shadow.camera.top = moonlightRange;
+    moonLight.shadow.camera.bottom = -moonlightRange;
 
  //   moonLight.shadowCameraFar = 1000;
-    moonLight.shadowDarkness = 0.1;
-
     scene.add(moonLight);
 
 
@@ -158,7 +133,7 @@ $(document).ready(function(){
     var geometry = new THREE.SphereGeometry( 25, 32, 32 );
     var material = new THREE.MeshBasicMaterial( { color: 0xFFFF33, vertexColors: THREE.FaceColors } );
     var moonMaterial =  new THREE.MeshLambertMaterial();
-    moonMaterial.map    = THREE.ImageUtils.loadTexture('img/moon.jpg')
+    moonMaterial.map    = loader.load('img/moon.jpg')
 
 
     // parent
@@ -192,11 +167,6 @@ $(document).ready(function(){
     ///////
     //sky//
     ///////
-    var now = new Date();
-    var hours = now.getHours();
-    var minute = now.getMinutes();
-    var currentMinute = calculateMinute(hours, minute);
-    landscapeUpdate(currentMinute);
 
 
     /////////
@@ -206,21 +176,21 @@ $(document).ready(function(){
     // geometry
     var cloudSize = 20;
     var geometry = new THREE.BoxGeometry( cloudSize*2, cloudSize, cloudSize );
-    
+
     // material
     var material = new THREE.MeshBasicMaterial( {
-        color: 0xffffff, 
+        color: 0xffffff,
         wireframe: true
     } );
 
     var mesh = new THREE.Mesh( geometry, material );
-    
+
 
     scene.add( mesh );
 
     var geometry = new THREE.Geometry();
     var material = new THREE.PointCloudMaterial( { size: 1 } );
-    for (var i = 0; i < 500; i++) 
+    for (var i = 0; i < 500; i++)
     {
         var vertex = new THREE.Vector3();
         vertex.x = Math.random() * cloudSize - cloudSize/2;
@@ -232,16 +202,9 @@ $(document).ready(function(){
     }
 
 
-    var particle = new THREE.PointCloud( geometry, material );   
+    var particle = new THREE.PointCloud( geometry, material );
 
     mesh.add(particle);
-
-
-
-
-
-
-
 
     mesh.position.set(10,0,0)
 
@@ -251,33 +214,33 @@ $(document).ready(function(){
     ///////
     scene.fog = new THREE.FogExp2( 0xffffff, 0.00001 );
 
-   
+
     //////////
-    //ground//    
+    //ground//
     //////////
 
-    
+
     var cubeSize = 50;
-    var geometry = new THREE.BoxGeometry( cubeSize, cubeSize, cubeSize );   
-   
+    var geometry = new THREE.BoxGeometry( cubeSize, cubeSize, cubeSize );
+
 
     materialArray = [
-                    new THREE.MeshLambertMaterial( { map: THREE.ImageUtils.loadTexture( 'img/grass.jpg' ) ,side: THREE.FrontSide } ), // right
-                    new THREE.MeshLambertMaterial( { map: THREE.ImageUtils.loadTexture( 'img/grass.jpg' ) ,side: THREE.FrontSide } ), // left
-                    new THREE.MeshLambertMaterial( { map: THREE.ImageUtils.loadTexture( 'img/grasstop.jpg' ) ,side: THREE.FrontSide } ), // top
-                    new THREE.MeshLambertMaterial( { map: THREE.ImageUtils.loadTexture( 'img/dirt.jpg' ) ,side: THREE.FrontSide } ), // bottom
-                    new THREE.MeshLambertMaterial( { map: THREE.ImageUtils.loadTexture( 'img/grass.jpg' ) ,side: THREE.FrontSide } ), // back
-                    new THREE.MeshLambertMaterial( { map: THREE.ImageUtils.loadTexture( 'img/grass.jpg' ) ,side: THREE.FrontSide } )  // front
-                
-                ];          
-    
+                    new THREE.MeshLambertMaterial( { map: loader.load( 'img/grass.jpg' ) ,side: THREE.FrontSide } ), // right
+                    new THREE.MeshLambertMaterial( { map: loader.load( 'img/grass.jpg' ) ,side: THREE.FrontSide } ), // left
+                    new THREE.MeshLambertMaterial( { map: loader.load( 'img/grasstop.jpg' ) ,side: THREE.FrontSide } ), // top
+                    new THREE.MeshLambertMaterial( { map: loader.load( 'img/dirt.jpg' ) ,side: THREE.FrontSide } ), // bottom
+                    new THREE.MeshLambertMaterial( { map: loader.load( 'img/grass.jpg' ) ,side: THREE.FrontSide } ), // back
+                    new THREE.MeshLambertMaterial( { map: loader.load( 'img/grass.jpg' ) ,side: THREE.FrontSide } )  // front
+
+                ];
+
     var material = new THREE.MeshFaceMaterial( materialArray );
 
     var plane_geometry = new THREE.Geometry();
     var step = boxSize/cubeSize;
 
 
-    for (var i = -boxSize/2; i < boxSize/2; i+=step) 
+    for (var i = -boxSize/2; i < boxSize/2; i+=step)
     {
         var planeCube = new THREE.Mesh( geometry, material );
         planeCube.castShadow = true;
@@ -290,9 +253,9 @@ $(document).ready(function(){
             planeCube.updateMatrix();
             plane_geometry.merge(planeCube.geometry, planeCube.matrix);
         }
-        
-        
-        
+
+
+
 
         //sunLight.castShadow = true;
     }
@@ -303,7 +266,7 @@ $(document).ready(function(){
     plane.castShadow = true;
     plane.receiveShadow = true;
     scene.add( plane );
-    
+
     //////////////
     //originCube//
     //////////////
@@ -317,7 +280,59 @@ $(document).ready(function(){
     sunLight.target = originCube;
     moonLight.target = originCube;
     controls.target = new THREE.Vector3(0, planeY+100, 0);    //set camera lookAt()
-    
+
+    //shader test
+    sky = new THREE.Sky({});
+    var skyMesh1 = new THREE.Mesh(
+      new THREE.PlaneBufferGeometry(boxSize, boxSize, 1, 1),
+      sky.material
+    );
+    skyMesh1.position.set(boxSize/2, 0, 0);
+    skyMesh1.rotation.y = -Math.PI/2;
+    scene.add(skyMesh1);
+
+    var skyMesh2 = new THREE.Mesh(
+      new THREE.PlaneBufferGeometry(boxSize, boxSize, 1, 1),
+      sky.material
+    );
+    skyMesh2.position.set(0, 0, boxSize/2);
+    skyMesh2.rotation.y = Math.PI;
+    scene.add(skyMesh2);
+
+    var skyMesh3 = new THREE.Mesh(
+      new THREE.PlaneBufferGeometry(boxSize, boxSize, 1, 1),
+      sky.material
+    );
+    skyMesh3.position.set(-boxSize/2, 0, 0);
+    skyMesh3.rotation.y = Math.PI/2;
+    scene.add(skyMesh3);
+
+    var skyMesh4 = new THREE.Mesh(
+      new THREE.PlaneBufferGeometry(boxSize, boxSize, 1, 1),
+      sky.material
+    );
+    skyMesh4.position.set(0, 0, -boxSize/2);
+    scene.add(skyMesh4);
+
+
+    /////////
+    //panel//
+    /////////
+
+    var now = new Date();
+    var hours = now.getHours();
+
+    var gui = new dat.GUI({
+        height : 5 * 32 - 1
+    });
+
+    var params = {
+        Hours : hours
+    };
+
+    gui.add(params, 'Hours').min(0).max(23).step(1).onChange(function(){
+      sky.render({hours:params.Hours});
+    });
 
     ///////////
     //animate//
@@ -333,9 +348,11 @@ $(document).ready(function(){
 
         requestAnimationFrame( render );
         renderer.render(scene, camera);
-        controls.update(delta); //for cameras
+        controls.update();
 
         stats.update();
+
+        sky.render();
         /*                                                            //this comment can use to reflect real world day/night condition
         var currentMinute = calculateMinute(hours, minute);
         skyUpdate(currentMinute);
@@ -357,23 +374,23 @@ $(document).ready(function(){
 function generateHeight(plane_geometry){
 
     var cubeCoordinate = [];
-    
+
 
     var cubeSize = 50;
-    var geometry = new THREE.BoxGeometry( cubeSize, cubeSize, cubeSize );   
+    var geometry = new THREE.BoxGeometry( cubeSize, cubeSize, cubeSize );
     var x,y,z;
-     
-    
+
+
     var material = new THREE.MeshFaceMaterial( materialArray );
 
 
-    for (var i = 0; i < cubeNumber; i++) 
+    for (var i = 0; i < cubeNumber; i++)
     {
         var planeCube = new THREE.Mesh( geometry, material );
         planeCube.castShadow = true;
         planeCube.receiveShadow = true;
 
-        
+
         x = Math.floor((Math.random() * boxSize - boxSize/2)/cubeSize)*cubeSize;
         y = planeY + cubeSize;
         z = Math.floor((Math.random() * boxSize - boxSize/2)/cubeSize)*cubeSize;
@@ -383,7 +400,7 @@ function generateHeight(plane_geometry){
             if (x == cubeCoordinate[j].x && z == cubeCoordinate[j].z){
                 if (y <= cubeCoordinate[j].y){
                     y = cubeCoordinate[j].y + cubeSize;
-                   
+
                 }
             }
 
@@ -396,33 +413,20 @@ function generateHeight(plane_geometry){
         planeCube.updateMatrix();
         cubeCoordinate.push(planeCube.position);
         plane_geometry.merge(planeCube.geometry, planeCube.matrix);
-        
-        
-        
-        
+
+
+
+
 
         //sunLight.castShadow = true;
     }
     return plane_geometry;
-    
-  
-    
 
 
-}
 
-function skyUpdate(currentMinute){
-
-    var hours = Math.floor(currentMinute/60);
-    if (hours != lastHour){
-        
-        landscapeUpdate(currentMinute);
-        lastHour = hours;
-    }
 
 
 }
-
 
 
 function createStar(type) {
@@ -442,7 +446,7 @@ function createStar(type) {
     var geometry = new THREE.Geometry();
     var material = new THREE.PointCloudMaterial( { size: 1 } );
     //top
-    for (var i = 0; i < starNumber; i++) 
+    for (var i = 0; i < starNumber; i++)
     {
         var vertex = new THREE.Vector3();
         vertex.x = Math.random() * boxSize - boxSize/2;
@@ -454,7 +458,7 @@ function createStar(type) {
     }
 
     //north
-    for (var i = 0; i < starNumber; i++) 
+    for (var i = 0; i < starNumber; i++)
     {
         var vertex = new THREE.Vector3();
         vertex.x = Math.random() * boxSize - boxSize/2;
@@ -466,7 +470,7 @@ function createStar(type) {
     }
 
     //west
-    for (var i = 0; i < starNumber; i++) 
+    for (var i = 0; i < starNumber; i++)
     {
         var vertex = new THREE.Vector3();
         vertex.x = boxSize/2 -1;
@@ -478,7 +482,7 @@ function createStar(type) {
     }
 
     //south
-    for (var i = 0; i < starNumber; i++) 
+    for (var i = 0; i < starNumber; i++)
     {
         var vertex = new THREE.Vector3();
         vertex.x = Math.random() * boxSize - boxSize/2;
@@ -490,7 +494,7 @@ function createStar(type) {
     }
 
     //east
-    for (var i = 0; i < starNumber; i++) 
+    for (var i = 0; i < starNumber; i++)
     {
         var vertex = new THREE.Vector3();
         vertex.x = -boxSize/2 +1;
@@ -501,61 +505,25 @@ function createStar(type) {
         //sunLight.castShadow = true;
     }
 
-    starParticle = new THREE.PointCloud( geometry, material );   
+    starParticle = new THREE.PointCloud( geometry, material );
     //create mesh and add to scene
     scene.add(starParticle);
 
-    
+
 
 }
 
 
 function sunUpdate(currentMinute){
 
-    
     var timeSplice = 2*Math.PI/totalMinute;
-
     parent.rotation.z = timeSplice*currentMinute;
-   /*
-    if (testCounter == 1440)
-        testCounter = 0;
-    testCounter+=1;
 
-
-    parent.rotation.z = timeSplice*testCounter;
-  */
-    
 }
-// gradient colors from http://cdpn.io/rDEAl
-/*var grads = [
-  [{color:"00000c",position:0},{color:"00000c",position:0}],1
-  [{color:"020111",position:85},{color:"191621",position:100}],2
-  [{color:"020111",position:60},{color:"20202c",position:100}],3
-  [{color:"020111",position:10},{color:"3a3a52",position:100}],4
-  [{color:"20202c",position:0},{color:"515175",position:100}],5
-  [{color:"40405c",position:0},{color:"6f71aa",position:80},{color:"8a76ab",position:100}],6
-  [{color:"4a4969",position:0},{color:"7072ab",position:50},{color:"cd82a0",position:100}],7
-  [{color:"757abf",position:0},{color:"8583be",position:60},{color:"eab0d1",position:100}],8
-  [{color:"82addb",position:0},{color:"ebb2b1",position:100}],9
-  [{color:"94c5f8",position:1},{color:"a6e6ff",position:70},{color:"b1b5ea",position:100}],10
-  [{color:"b7eaff",position:0},{color:"94dfff",position:100}],11
-  [{color:"9be2fe",position:0},{color:"67d1fb",position:100}],12
-  [{color:"90dffe",position:0},{color:"38a3d1",position:100}],13
-  [{color:"57c1eb",position:0},{color:"246fa8",position:100}],14
-  [{color:"2d91c2",position:0},{color:"1e528e",position:100}],15
-  [{color:"2473ab",position:0},{color:"1e528e",position:70},{color:"5b7983",position:100}],16
-  [{color:"1e528e",position:0},{color:"265889",position:50},{color:"9da671",position:100}],17
-  [{color:"1e528e",position:0},{color:"728a7c",position:50},{color:"e9ce5d",position:100}],18
-  [{color:"154277",position:0},{color:"576e71",position:30},{color:"e1c45e",position:70},{color:"b26339",position:100}],19
-  [{color:"163C52",position:0},{color:"4F4F47",position:30},{color:"C5752D",position:60},{color:"B7490F",position:80},{color:"2F1107",position:100}],20
-  [{color:"071B26",position:0},{color:"071B26",position:30},{color:"8A3B12",position:80},{color:"240E03",position:100}],21
-  [{color:"010A10",position:30},{color:"59230B",position:80},{color:"2F1107",position:100}],22
-  [{color:"090401",position:50},{color:"4B1D06",position:100}],
-  [{color:"00000c",position:80},{color:"150800",position:100}],
-];*/
+
 
 function landscapeUpdate (currentMinute){
-    
+
     //Keep in code - Written by Computerhope.com
     //Place this script in your HTML heading section
 
@@ -577,7 +545,7 @@ function landscapeUpdate (currentMinute){
         case 3 :
             generateSky([0.6, '#020111',1, '#20202c']);
             createStar('max');
-   
+
             break;
 
         case 4 :
@@ -590,88 +558,88 @@ function landscapeUpdate (currentMinute){
             createStar('normal');
 
             break;
-        
+
         case 6 :
             generateSky([0, '#40405c',0.8, '#6f71aa',1, '#8a76ab']);
             createStar('min');
             break;
-        
+
         case 7 :
             generateSky([0, '#4a4969',0.5, '#7072ab',1, '#cd82a0']);
             createStar('min');
             break;
-        
+
         case 8 :
             generateSky([0, '#757abf',0.6, '#8583be',1, '#eab0d1']);
             createStar('none');
             break;
-        
+
         case 9 :
             generateSky([0, '#82addb',1, '#ebb2b1']);
             createStar('none');
             break;
-        
+
         case 10 :
             generateSky([0.01, '#94c5f8',0.7, '#a6e6ff',1, '#b1b5ea']);
             createStar('none');
             break;
-        
+
         case 11 :
             generateSky([0, '#b7eaff',1, '#94dfff']);
             createStar('none');
             break;
-        
+
         case 12 :
             generateSky([0, '#9be2fe',1, '#67d1fb']);
             createStar('none');
             break;
-        
+
         case 13 :
             generateSky([0, '#90dffe',1, '#38a3d1']);
             createStar('none');
             break;
-        
+
         case 14 :
             generateSky([0, '#57c1eb',1, '#246fa8']);
             createStar('none');
             break;
-        
+
         case 15 :
             generateSky([0, '#2d91c2',1, '#1e528e']);
- 
+
             createStar('none');
             break;
-        
+
         case 16 :
             generateSky([0, '#2473ab',0.7, '#1e528e',1, '#5b7983']);
             createStar('min');
             break;
-        
+
         case 17 :
             generateSky([0, '#1e528e',0.5, '#265889',1, '#9da671']);
             createStar('min');
-            
+
             break;
-        
+
         case 18 :
             generateSky([0, '#1e528e',0.5, '#728a7c',1, '#e9ce5d']);
             createStar('min');
 
 
             break;
-        
+
         case 19 :
             generateSky([0, '#154277',0.3, '#576e71',0.7, '#e1c45e',1,"#b26339"]);
             createStar('normal');
 
             break;
-        
+
         case 20 :
             generateSky([0, '#163C52',0.3, '#4F4F47',0.6, '#C5752D',0.8, '#B7490F',1, '#2F1107']);
             createStar('normal');
-            
+
             break;
-        
+
         case 21 :
             generateSky([0, '#071B26',0.3, '#071B26',0.8, '#8A3B12',1, '#240E03']);
             createStar('normal');
@@ -682,23 +650,23 @@ function landscapeUpdate (currentMinute){
             sunLight.shadowCameraBottom = -10;
 */
             break;
-        
+
         case 22 :
             generateSky([0.3, '#010A10',0.8, '#59230B',1, '#2F1107']);
             createStar('normal');
             break;
-        
+
         case 23 :
             generateSky([0.5, '#090401',1, '#4B1D06']);
             createStar('max');
             break;
-        
+
         case 24 :
             generateSky([0.8, '#00000c',1, '#150800']);
             createStar('max');
             break;
-        
-        
+
+
     }
     //return gradient;
 }
@@ -707,49 +675,6 @@ function calculateMinute(hours,minute){
     var currentMinute = hours*60 + minute;
     return currentMinute;
 }
-
-function generateSky(gradients){
-    
-    //skybox
-    var skyColor = 'blue';
-    var size = boxSize;
-    var skyGeometry = new THREE.BoxGeometry( size, size, size );   
-    
-
-    var texture = new THREE.Texture( generateTexture(size,gradients) );
-    textureImage = texture.image;
-    texture.needsUpdate = true; // important!
-
-
-    var materials = [
-
-                    new THREE.MeshBasicMaterial( { map: texture, side: THREE.BackSide } ), // right
-                    new THREE.MeshBasicMaterial( { map: texture, side: THREE.BackSide } ), // left
-                    new THREE.MeshBasicMaterial( {color: gradients[1], side: THREE.BackSide} ), // top
-                    new THREE.MeshBasicMaterial( {color: gradients[1], side: THREE.BackSide} ), // bottom
-                    new THREE.MeshBasicMaterial( { map: texture, side: THREE.BackSide } ), // back
-                    new THREE.MeshBasicMaterial( { map: texture, side: THREE.BackSide } )  // front
-                
-                ];
-
-
-
-
-    var skyMaterial = new THREE.MeshFaceMaterial( materials );
-    
-    var skyBox = new THREE.Mesh( skyGeometry, skyMaterial );
-    scene.add( skyBox );
-    
-
-
-  //  skyBox = new THREE.Mesh( skyGeometry, skyMaterials  );
-
- 
- 
-
-}
-
-
 
 function generateTexture(size,gradients) {
 
@@ -767,12 +692,12 @@ function generateTexture(size,gradients) {
     context.rect( 0, 0, size, size );
     var gradient = context.createLinearGradient( -size/2, 0, -size/2, size );
     for (var i = 0 ; i < gradients.length ; i+=2){
-        gradient.addColorStop(gradients[i], gradients[i+1]); 
+        gradient.addColorStop(gradients[i], gradients[i+1]);
     }
-   
+
 
     //gradient = changeColor(gradient);
-    
+
     context.fillStyle = gradient;
     context.fill();
 
