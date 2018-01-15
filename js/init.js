@@ -344,8 +344,8 @@ $(document).ready(function(){
 
         if (testCounter == totalMinute)
             testCounter = 0;
-        skyUpdate(testCounter);
-        sunUpdate(testCounter);
+        //skyUpdate(testCounter);
+        //sunUpdate(testCounter);
         testCounter+=2;
 
     };
