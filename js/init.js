@@ -1,7 +1,7 @@
 var scene, camera, renderer, controls, stats;
 var boxSize = 2000;
 var planeY = -boxSize/2 ;
-var lastHour;
+var now, hours, minutes, lastMinute;
 var parent, sunLight, moonLight, spinRadius = boxSize/2;
 var materialArray = [];
 var testCounter = 240;
@@ -11,10 +11,6 @@ var cubeNumber =400;
 var originCube;
 var loader = new THREE.TextureLoader();
 $(document).ready(function(){
-
-    var now = new Date();
-    var hours = now.getHours();
-    lastHour = hours;
 
     scene = new THREE.Scene();
 
@@ -40,23 +36,6 @@ $(document).ready(function(){
     document.body.appendChild( renderer.domElement );
 
     ////////
-    //info//
-    ////////
-
-    info = document.createElement( 'div' );
-    info.style.position = 'absolute';
-    info.style.top = '30px';
-    info.style.width = '100%';
-    info.style.textAlign = 'center';
-    info.style.color = '#fff';
-    info.style.fontWeight = 'bold';
-    info.style.backgroundColor = 'transparent';
-    info.style.zIndex = '1';
-    info.style.fontFamily = 'Monospace';
-    info.innerHTML = 'Drag to rotate camera';
-    document.body.appendChild( info );
-
-    ////////
     //Stat//
     ////////
 
@@ -67,7 +46,7 @@ $(document).ready(function(){
     document.body.appendChild(stats.domElement);
 
     ////////////
-    //CONTROLS//
+    //controls//
     ////////////
 
     controls = new THREE.OrbitControls( camera, renderer.domElement );
@@ -265,7 +244,7 @@ $(document).ready(function(){
     var plane = new THREE.Mesh( plane_geometry, material );
     plane.castShadow = true;
     plane.receiveShadow = true;
-    scene.add( plane );
+    //scene.add( plane );
 
     //////////////
     //originCube//
@@ -281,15 +260,17 @@ $(document).ready(function(){
     moonLight.target = originCube;
     controls.target = new THREE.Vector3(0, planeY+100, 0);    //set camera lookAt()
 
-    //shader test
-    sky = new THREE.Sky({});
+    //////////
+    //skyBox//
+    //////////
+
+    sky = new THREE.Sky({side:THREE.FrontSide});
     var skyMesh1 = new THREE.Mesh(
       new THREE.PlaneBufferGeometry(boxSize, boxSize, 1, 1),
       sky.material
     );
     skyMesh1.position.set(boxSize/2, 0, 0);
     skyMesh1.rotation.y = -Math.PI/2;
-    scene.add(skyMesh1);
 
     var skyMesh2 = new THREE.Mesh(
       new THREE.PlaneBufferGeometry(boxSize, boxSize, 1, 1),
@@ -297,7 +278,6 @@ $(document).ready(function(){
     );
     skyMesh2.position.set(0, 0, boxSize/2);
     skyMesh2.rotation.y = Math.PI;
-    scene.add(skyMesh2);
 
     var skyMesh3 = new THREE.Mesh(
       new THREE.PlaneBufferGeometry(boxSize, boxSize, 1, 1),
@@ -305,33 +285,52 @@ $(document).ready(function(){
     );
     skyMesh3.position.set(-boxSize/2, 0, 0);
     skyMesh3.rotation.y = Math.PI/2;
-    scene.add(skyMesh3);
 
     var skyMesh4 = new THREE.Mesh(
       new THREE.PlaneBufferGeometry(boxSize, boxSize, 1, 1),
       sky.material
     );
     skyMesh4.position.set(0, 0, -boxSize/2);
-    scene.add(skyMesh4);
 
+    var skyBox = new THREE.Group();
+    skyBox.add( skyMesh1 );
+    skyBox.add( skyMesh2 );
+    skyBox.add( skyMesh3 );
+    skyBox.add( skyMesh4 );
+    scene.add(skyBox);
+    skyBox.rotation.x = Math.PI;
+
+    //skysphere
+    // var skyBox = new THREE.Mesh(
+    //   new THREE.SphereBufferGeometry( boxSize, 32, 32),
+    //   sky.material
+    // );
+    // scene.add(skyBox);
+    // skyBox.rotation.x = Math.PI;
 
     /////////
     //panel//
     /////////
 
-    var now = new Date();
-    var hours = now.getHours();
-
     var gui = new dat.GUI({
         height : 5 * 32 - 1
     });
 
+    now = new Date();
+    hours = now.getHours();
+    minutes = now.getMinutes();
+
     var params = {
-        Hours : hours
+        Hours: hours,
+        Minutes: minutes
     };
 
     gui.add(params, 'Hours').min(0).max(23).step(1).onChange(function(){
-      sky.render({hours:params.Hours});
+      sky.render({hours:params.Hours, minutes:params.Minutes});
+    });
+
+    gui.add(params, 'Minutes').min(0).max(60).step(1).onChange(function(){
+      sky.render({hours:params.Hours, minutes:params.Minutes});
     });
 
     ///////////
@@ -342,28 +341,26 @@ $(document).ready(function(){
     var render = function () {
         var delta = clock.getDelta();
 
-        var now = new Date();
-        var hours = now.getHours();
-        var minute = now.getMinutes();
+        hours = now.getHours();
+        minutes = now.getMinutes();
+
 
         requestAnimationFrame( render );
         renderer.render(scene, camera);
         controls.update();
-
         stats.update();
 
-        sky.render();
         /*                                                            //this comment can use to reflect real world day/night condition
         var currentMinute = calculateMinute(hours, minute);
         skyUpdate(currentMinute);
         sunUpdate(currentMinute);
         */
 
-        if (testCounter == totalMinute)
-            testCounter = 0;
-        //skyUpdate(testCounter);
-        //sunUpdate(testCounter);
-        testCounter+=2;
+        if (minutes != lastMinute){
+            sky.render();
+            lastMinute = minutes;
+        }
+
 
     };
 
@@ -672,7 +669,7 @@ function landscapeUpdate (currentMinute){
 }
 
 function calculateMinute(hours,minute){
-    var currentMinute = hours*60 + minute;
+    var currentMinute = hours*60 + minutes;
     return currentMinute;
 }
 

@@ -4,7 +4,7 @@ THREE.ShaderLib["sky"] = {
     "colors": {type:'v3v', value:[new THREE.Vector3(0.0, 0.0, 0.0), new THREE.Vector3(0.0, 0.0, 0.0), new THREE.Vector3(0.0, 0.0, 0.0), new THREE.Vector3(0.0, 0.0, 0.0), new THREE.Vector3(0.0, 0.0, 0.0)]},
     "positions": {type:'fv1', value:[1.0, 1.0, 1.0, 1.0, 1.0]},
     "previousPositions": {type:'fv1', value:[1.0, 1.0, 1.0, 1.0, 1.0]},
-    "percentage": {type:'f', value:0.0},
+    "percentage": {type:'f', value:0.0}
   },
   vertexShader:[
     '#ifdef GL_ES',
@@ -23,15 +23,17 @@ THREE.ShaderLib["sky"] = {
     'precision mediump float;',
     '#endif',
 
-    'uniform vec3 colors[5];',
-    'uniform vec3 previousColors[5];',
-    'uniform float positions[5];',
-    'uniform float previousPositions[5];',
+    'const int maxColorCode = 5;',
+
+    'uniform vec3 colors[maxColorCode];',
+    'uniform vec3 previousColors[maxColorCode];',
+    'uniform float positions[maxColorCode];',
+    'uniform float previousPositions[maxColorCode];',
     'uniform float percentage;',
 
     'varying vec2 uVu;',
 
-    'float normalize(in float upperBound, in float lowerBound, in float value){',
+    'float normalizePosition(in float upperBound, in float lowerBound, in float value){',
     '    return (value - lowerBound) / (upperBound - lowerBound);',
     '}',
 
@@ -57,17 +59,19 @@ THREE.ShaderLib["sky"] = {
     '    vec3 currentColor;',
     '    vec3 previousColor;',
 
-    '    for (int i = 0 ; i < 4 ; i++){',
+    '    for (int i = 0 ; i < maxColorCode -1 ; i++){',
     '        // a workaround since glsl only accepts constant variables and loop indices as array index ',
     '        if (i == index){',
-    '           percent = If_Greater(positions[i], st.y) * If_Smaller(positions[i+1], st.y) * normalize(positions[i+1], positions[i], st.y);',
+    '           percent = If_Greater(positions[i], st.y) * If_Smaller(positions[i+1], st.y) * normalizePosition(positions[i+1], positions[i], st.y);',
     '           currentColor = step(0.0001, percent) * (mix(colors[i], colors[i+1], percent));',
     '        }',
     '    }',
-    '    for (int j = 0 ; j < 4 ; j++){',
+
+    '    int previousIndex = int(getPreviousIndex(st));',
+    '    for (int j = 0 ; j < maxColorCode -1 ; j++){',
     '        // a workaround since glsl only accepts constant variables and loop indices as array index ',
-    '        if (j == index){',
-    '           percent = If_Greater(previousPositions[j], st.y) * If_Smaller(previousPositions[j+1], st.y) * normalize(previousPositions[j+1], previousPositions[j], st.y);',
+    '        if (j == previousIndex){',
+    '           percent = If_Greater(previousPositions[j], st.y) * If_Smaller(previousPositions[j+1], st.y) * normalizePosition(previousPositions[j+1], previousPositions[j], st.y);',
     '           previousColor = step(0.0001, percent) * (mix(previousColors[j], previousColors[j+1], percent));',
     '        }',
     '    }',
@@ -87,60 +91,31 @@ THREE.Sky = function(options){
 
   // gradient colors from http://cdpn.io/rDEAl
   this.grads = [
-    [{color: new THREE.Vector3(0,0,12), position:0},{color: new THREE.Vector3(0,0,12), position:1.0}],
-    [{color: new THREE.Vector3(2,1,17),position:0},{color: new THREE.Vector3(2,1,17),position:0.85},{color:new THREE.Vector3(25,22,33),position:1.0}],
-    [{color:new THREE.Vector3(2,1,17),position:0},{color:new THREE.Vector3(2,1,17),position:0.6},{color:new THREE.Vector3(32,32,44),position:1.0}],
-    [{color:new THREE.Vector3(2,1,17),position:0},{color:new THREE.Vector3(2,1,17),position:0.1},{color:new THREE.Vector3(58,58,82),position:1.0}],
-    [{color:new THREE.Vector3(32,32,44),position:0},{color:new THREE.Vector3(81,81,117),position:1.0}],
-    [{color:new THREE.Vector3(64,64,92),position:0},{color:new THREE.Vector3(111,113,170),position:0.8},{color:new THREE.Vector3(138,118,171),position:1.0}],
-    [{color:new THREE.Vector3(74,73,105),position:0},{color:new THREE.Vector3(112,114,171),position:0.5},{color:new THREE.Vector3(205,130,160),position:1.0}],
-    [{color:new THREE.Vector3(117,122,191),position:0},{color:new THREE.Vector3(133,131,190),position:0.6},{color:new THREE.Vector3(234,176,209),position:1.0}],
-    [{color:new THREE.Vector3(130,173,219),position:0},{color:new THREE.Vector3(235,178,177),position:1.0}],
-    [{color:new THREE.Vector3(148,197,248),position:0},{color:new THREE.Vector3(148,197,248),position:0.01},{color:new THREE.Vector3(166,230,255),position:0.7},{color:new THREE.Vector3(177,181,234),position:1.0}],
-    [{color:new THREE.Vector3(183,234,255),position:0},{color:new THREE.Vector3(148,223,255),position:1.0}],
-    [{color:new THREE.Vector3(155,226,254),position:0},{color:new THREE.Vector3(103,209,251),position:1.0}],
-    [{color:new THREE.Vector3(144,223,254),position:0},{color:new THREE.Vector3(56,163,209),position:1.0}],
-    [{color:new THREE.Vector3(87,193,235),position:0},{color:new THREE.Vector3(36,111,168),position:1.0}],
-    [{color:new THREE.Vector3(45,145,194),position:0},{color:new THREE.Vector3(30,82,142),position:1.0}],
-    [{color:new THREE.Vector3(36,115,171),position:0},{color:new THREE.Vector3(30,82,142),position:0.7},{color:new THREE.Vector3(91,121,131),position:1.0}],
-    [{color:new THREE.Vector3(30,82,142),position:0},{color:new THREE.Vector3(38,88,137),position:0.5},{color:new THREE.Vector3(157,166,113),position:1.0}],
-    [{color:new THREE.Vector3(30,82,142),position:0},{color:new THREE.Vector3(114,138,124),position:0.5},{color:new THREE.Vector3(233,206,93),position:1.0}],
-    [{color:new THREE.Vector3(21,66,119),position:0},{color:new THREE.Vector3(87,110,113),position:0.3},{color:new THREE.Vector3(225,196,94),position:0.7},{color:new THREE.Vector3(178,99,57),position:1.0}],
-    [{color:new THREE.Vector3(22,60,82),position:0},{color:new THREE.Vector3(79,79,71),position:0.3},{color:new THREE.Vector3(197,117,45),position:0.6},{color:new THREE.Vector3(183,73,15),position:0.8},{color:new THREE.Vector3(47,17,7),position:1.0}],
-    [{color:new THREE.Vector3(7,27,38),position:0},{color:new THREE.Vector3(7,27,38),position:0.3},{color:new THREE.Vector3(138,59,18),position:0.8},{color:new THREE.Vector3(36,14,3),position:1.0}],
-    [{color:new THREE.Vector3(1,10,16),position:0},{color:new THREE.Vector3(1,10,16),position:0.3},{color:new THREE.Vector3(89,35,11),position:0.8},{color:new THREE.Vector3(47,17,7),position:1.0}],
-    [{color:new THREE.Vector3(9,4,1),position:0},{color:new THREE.Vector3(9,4,1),position:0.5},{color:new THREE.Vector3(75,29,6),position:1.0}],
-    [{color:new THREE.Vector3(0,0,12),position:0},{color:new THREE.Vector3(0,0,12),position:0.8},{color:new THREE.Vector3(21,8,0),position:1.0}],
+    [{color: new THREE.Vector3(0, 0, 0.047), position:0},{color: new THREE.Vector3(0, 0, 0.047), position:1.0}],
+    [{color: new THREE.Vector3(0.007, 0.003, 0.066),position:0},{color: new THREE.Vector3(0.007, 0.003, 0.066),position:0.85},{color:new THREE.Vector3(0.098, 0.086, 0.129),position:1.0}],
+    [{color:new THREE.Vector3(0.007, 0.003, 0.066),position:0},{color:new THREE.Vector3(0.007, 0.003, 0.066),position:0.6},{color:new THREE.Vector3(0.125, 0.125, 0.172),position:1.0}],
+    [{color:new THREE.Vector3(0.007, 0.003, 0.066),position:0},{color:new THREE.Vector3(0.007, 0.003, 0.066),position:0.1},{color:new THREE.Vector3(0.227, 0.227, 0.321),position:1.0}],
+    [{color:new THREE.Vector3(0.125, 0.125, 0.172),position:0},{color:new THREE.Vector3(0.317, 0.317, 0.458),position:1.0}],
+    [{color:new THREE.Vector3(0.250, 0.250, 0.360),position:0},{color:new THREE.Vector3(0.435, 0.443, 0.666),position:0.8},{color:new THREE.Vector3(0.541, 0.462, 0.670),position:1.0}],
+    [{color:new THREE.Vector3(0.290, 0.286, 0.411),position:0},{color:new THREE.Vector3(0.439, 0.447, 0.670),position:0.5},{color:new THREE.Vector3(0.803, 0.509, 0.627),position:1.0}],
+    [{color:new THREE.Vector3(0.458, 0.478, 0.749),position:0},{color:new THREE.Vector3(0.521, 0.513, 0.745),position:0.6},{color:new THREE.Vector3(0.917, 0.690, 0.819),position:1.0}],
+    [{color:new THREE.Vector3(0.509, 0.678, 0.858),position:0},{color:new THREE.Vector3(0.921, 0.698, 0.694),position:1.0}],
+    [{color:new THREE.Vector3(0.580, 0.772, 0.972),position:0},{color:new THREE.Vector3(0.580, 0.772, 0.972),position:0.01},{color:new THREE.Vector3(0.650, 0.901, 1),position:0.7},{color:new THREE.Vector3(0.694, 0.709, 0.917),position:1.0}],
+    [{color:new THREE.Vector3(0.717, 0.917, 1),position:0},{color:new THREE.Vector3(0.580, 0.874, 1),position:1.0}],
+    [{color:new THREE.Vector3(0.607, 0.886, 0.996),position:0},{color:new THREE.Vector3(0.403, 0.819, 0.984),position:1.0}],
+    [{color:new THREE.Vector3(0.564, 0.874, 0.996),position:0},{color:new THREE.Vector3(0.219, 0.639, 0.819),position:1.0}],
+    [{color:new THREE.Vector3(0.341, 0.756, 0.921),position:0},{color:new THREE.Vector3(0.141, 0.435, 0.658),position:1.0}],
+    [{color:new THREE.Vector3(0.176, 0.568, 0.760),position:0},{color:new THREE.Vector3(0.117, 0.321, 0.556),position:1.0}],
+    [{color:new THREE.Vector3(0.141, 0.450, 0.670),position:0},{color:new THREE.Vector3(0.117, 0.321, 0.556),position:0.7},{color:new THREE.Vector3(0.356, 0.474, 0.513),position:1.0}],
+    [{color:new THREE.Vector3(0.117, 0.321, 0.556),position:0},{color:new THREE.Vector3(0.149, 0.345, 0.537),position:0.5},{color:new THREE.Vector3(0.615, 0.650, 0.443),position:1.0}],
+    [{color:new THREE.Vector3(0.117, 0.321, 0.556),position:0},{color:new THREE.Vector3(0.447, 0.541, 0.486),position:0.5},{color:new THREE.Vector3(0.913, 0.807, 0.364),position:1.0}],
+    [{color:new THREE.Vector3(0.082, 0.258, 0.466),position:0},{color:new THREE.Vector3(0.341, 0.431, 0.443),position:0.3},{color:new THREE.Vector3(0.882, 0.768, 0.368),position:0.7},{color:new THREE.Vector3(0.698, 0.388, 0.223),position:1.0}],
+    [{color:new THREE.Vector3(0.086, 0.235, 0.321),position:0},{color:new THREE.Vector3(0.309, 0.309, 0.278),position:0.3},{color:new THREE.Vector3(0.772, 0.458, 0.176),position:0.6},{color:new THREE.Vector3(0.717, 0.286, 0.058),position:0.8},{color:new THREE.Vector3(0.184, 0.066, 0.027),position:1.0}],
+    [{color:new THREE.Vector3(0.027, 0.105, 0.149),position:0},{color:new THREE.Vector3(0.027, 0.105, 0.149),position:0.3},{color:new THREE.Vector3(0.541, 0.231, 0.070),position:0.8},{color:new THREE.Vector3(0.141, 0.054, 0.011),position:1.0}],
+    [{color:new THREE.Vector3(0.003, 0.039, 0.062),position:0},{color:new THREE.Vector3(0.003, 0.039, 0.062),position:0.3},{color:new THREE.Vector3(0.349, 0.137, 0.043),position:0.8},{color:new THREE.Vector3(0.184, 0.066, 0.027),position:1.0}],
+    [{color:new THREE.Vector3(0.035, 0.015, 0.003),position:0},{color:new THREE.Vector3(0.035, 0.015, 0.003),position:0.5},{color:new THREE.Vector3(0.294, 0.113, 0.023),position:1.0}],
+    [{color:new THREE.Vector3(0, 0, 0.047),position:0},{color:new THREE.Vector3(0, 0, 0.047),position:0.8},{color:new THREE.Vector3(0.082, 0.031, 0),position:1.0}],
   ];
-
-
-  // gradient colors from http://cdpn.io/rDEAl
-  // this.grads = [
-  //   [{color: new THREE.Vector3(0,0,12), position:0},{color: new THREE.Vector3(0,0,12), position:0}],
-  //   [{color: new THREE.Vector3(2,1,17),position:0.85},{color:new THREE.Vector3(25,22,33),position:1.0}],
-  //   [{color:new THREE.Vector3(2,1,17),position:0.6},{color:new THREE.Vector3(32,32,44),position:1.0}],
-  //   [{color:new THREE.Vector3(2,1,17),position:0.1},{color:new THREE.Vector3(58,58,82),position:1.0}],
-  //   [{color:new THREE.Vector3(32,32,44),position:0},{color:new THREE.Vector3(81,81,117),position:1.0}],
-  //   [{color:new THREE.Vector3(64,64,92),position:0},{color:new THREE.Vector3(111,113,170),position:0.8},{color:new THREE.Vector3(138,118,171),position:1.0}],
-  //   [{color:new THREE.Vector3(74,73,105),position:0},{color:new THREE.Vector3(112,114,171),position:0.5},{color:new THREE.Vector3(205,130,160),position:1.0}],
-  //   [{color:new THREE.Vector3(117,122,191),position:0},{color:new THREE.Vector3(133,131,190),position:0.6},{color:new THREE.Vector3(234,176,209),position:1.0}],
-  //   [{color:new THREE.Vector3(130,173,219),position:0},{color:new THREE.Vector3(235,178,177),position:1.0}],
-  //   [{color:new THREE.Vector3(148,197,248),position:0.01},{color:new THREE.Vector3(166,230,255),position:0.7},{color:new THREE.Vector3(177,181,234),position:1.0}],
-  //   [{color:new THREE.Vector3(183,234,255),position:0},{color:new THREE.Vector3(148,223,255),position:1.0}],
-  //   [{color:new THREE.Vector3(155,226,254),position:0},{color:new THREE.Vector3(103,209,251),position:1.0}],
-  //   [{color:new THREE.Vector3(144,223,254),position:0},{color:new THREE.Vector3(56,163,209),position:1.0}],
-  //   [{color:new THREE.Vector3(87,193,235),position:0},{color:new THREE.Vector3(36,111,168),position:1.0}],
-  //   [{color:new THREE.Vector3(45,145,194),position:0},{color:new THREE.Vector3(30,82,142),position:1.0}],
-  //   [{color:new THREE.Vector3(36,115,171),position:0},{color:new THREE.Vector3(30,82,142),position:0.7},{color:new THREE.Vector3(91,121,131),position:1.0}],
-  //   [{color:new THREE.Vector3(30,82,142),position:0},{color:new THREE.Vector3(38,88,137),position:0.5},{color:new THREE.Vector3(157,166,113),position:1.0}],
-  //   [{color:new THREE.Vector3(30,82,142),position:0},{color:new THREE.Vector3(114,138,124),position:0.5},{color:new THREE.Vector3(233,206,93),position:1.0}],
-  //   [{color:new THREE.Vector3(21,66,119),position:0},{color:new THREE.Vector3(87,110,113),position:0.3},{color:new THREE.Vector3(225,196,94),position:0.7},{color:new THREE.Vector3(178,99,57),position:1.0}],
-  //   [{color:new THREE.Vector3(22,60,82),position:0},{color:new THREE.Vector3(79,79,71),position:0.3},{color:new THREE.Vector3(197,117,45),position:0.6},{color:new THREE.Vector3(183,73,15),position:0.8},{color:new THREE.Vector3(47,17,7),position:1.0}],
-  //   [{color:new THREE.Vector3(7,27,38),position:0},{color:new THREE.Vector3(7,27,38),position:0.3},{color:new THREE.Vector3(138,59,18),position:0.8},{color:new THREE.Vector3(36,14,3),position:1.0}],
-  //   [{color:new THREE.Vector3(1,10,16),position:0.3},{color:new THREE.Vector3(89,35,11),position:0.8},{color:new THREE.Vector3(47,17,7),position:1.0}],
-  //   [{color:new THREE.Vector3(9,4,1),position:0.5},{color:new THREE.Vector3(75,29,6),position:1.0}],
-  //   [{color:new THREE.Vector3(0,0,12),position:0.8},{color:new THREE.Vector3(21,8,0),position:1.0}],
-  // ];
 
   THREE.Object3D.call(this);
   this.name = "sky_" + this.id;
@@ -150,6 +125,8 @@ THREE.Sky = function(options){
     return value !== undefined ? value : defaultValue;
   }
 
+  this.side = params(options.side, THREE.FrontSide);
+
   var skyShader = THREE.ShaderLib["sky"];
   var skyUniforms = THREE.UniformsUtils.clone(skyShader.uniforms);
 
@@ -158,6 +135,10 @@ THREE.Sky = function(options){
     vertexShader: skyShader.vertexShader,
     uniforms: skyUniforms
   });
+
+  this.material.side = this.side;
+  this.previousHours = null;
+  this.hours = null;
 
   this.mesh = new THREE.Object3D();
 };
@@ -174,20 +155,35 @@ THREE.Sky.prototype.render = function(options){
 
       var now = new Date();
       var hours = params(options.hours, now.getHours());
-      var minute = params(options.minute, now.getMinutes());
-      var percentage = params(options.percentage, minute/60);
-      // hours = 23;
+      var minutes = params(options.minutes, now.getMinutes());
+      var percentage = params(options.percentage, minutes/60);
       this.material.uniforms.percentage.value = percentage;
 
-      var previousHours = (hours - 1 + 24) % 24;
-      for (var i = 0 ; i < this.grads[previousHours].length; i++){
-        this.material.uniforms.previousColors.value[i] = this.grads[previousHours][i].color.normalize();
-        this.material.uniforms.previousPositions.value[i] = this.grads[previousHours][i].position;
+      console.log(percentage)
+      if (this.previousHours == null){
+        this.previousHours = (hours - 1 + 24) % 24;
+      }else{
+        this.previousHours = this.hours;
+      }
+      this.hours = hours;
+
+      for (var i = 0 ; i < 5; i++){
+        if (i < this.grads[this.previousHours].length){
+            this.material.uniforms.previousColors.value[i] = this.grads[this.previousHours][i].color;
+            this.material.uniforms.previousPositions.value[i] = this.grads[this.previousHours][i].position;
+        }else{
+            this.material.uniforms.previousPositions.value[i] = 1.0;
+        }
+
       }
 
-      for (var j = 0 ; j < this.grads[hours].length ; j++){
-        this.material.uniforms.colors.value[j] = this.grads[hours][j].color.normalize();
-        this.material.uniforms.positions.value[j] = this.grads[hours][j].position;
+      for (var j = 0 ; j <  5; j++){
+        if (j < this.grads[this.hours].length){
+          this.material.uniforms.colors.value[j] = this.grads[this.hours][j].color;
+          this.material.uniforms.positions.value[j] = this.grads[this.hours][j].position;
+        }else{
+          this.material.uniforms.positions.value[j] = 1.0;
+        }
       }
 
 };
