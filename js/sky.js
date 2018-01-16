@@ -54,11 +54,12 @@ THREE.ShaderLib["sky"] = {
     '}',
 
     'vec3 gradient(in vec2 st){',
-    '    int index = int(getCurrentIndex(st));',
+
     '    float percent;',
     '    vec3 currentColor;',
     '    vec3 previousColor;',
 
+    '    int index = int(getCurrentIndex(st));',
     '    for (int i = 0 ; i < maxColorCode -1 ; i++){',
     '        // a workaround since glsl only accepts constant variables and loop indices as array index ',
     '        if (i == index){',
@@ -156,10 +157,10 @@ THREE.Sky.prototype.render = function(options){
       var now = new Date();
       var hours = params(options.hours, now.getHours());
       var minutes = params(options.minutes, now.getMinutes());
-      var percentage = params(options.percentage, minutes/60);
+
+      var percentage = minutes/60;
       this.material.uniforms.percentage.value = percentage;
 
-      console.log(percentage)
       if (this.previousHours == null){
         this.previousHours = (hours - 1 + 24) % 24;
       }else{
@@ -174,7 +175,6 @@ THREE.Sky.prototype.render = function(options){
         }else{
             this.material.uniforms.previousPositions.value[i] = 1.0;
         }
-
       }
 
       for (var j = 0 ; j <  5; j++){

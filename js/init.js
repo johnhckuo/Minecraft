@@ -1,5 +1,5 @@
 var scene, camera, renderer, controls, stats;
-var boxSize = 2000;
+var boxSize = 5000;
 var planeY = -boxSize/2 ;
 var now, hours, minutes, lastMinute;
 var parent, sunLight, moonLight, spinRadius = boxSize/2;
