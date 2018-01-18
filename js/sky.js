@@ -161,11 +161,14 @@ THREE.Sky.prototype.render = function(options){
       var percentage = minutes/60;
       this.material.uniforms.percentage.value = percentage;
 
-      if (this.previousHours == null){
+      if (hours == this.previousHours){
+
+      }else if (hours > this.previousHours || this.previousHours == null){
         this.previousHours = (hours - 1 + 24) % 24;
       }else{
-        this.previousHours = this.hours;
+        this.previousHours = (hours + 1) % 24;
       }
+      
       this.hours = hours;
 
       for (var i = 0 ; i < 5; i++){
