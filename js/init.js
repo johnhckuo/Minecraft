@@ -9,6 +9,7 @@ var totalMinute = 1440;
 var starParticle;
 var cubeNumber =400;
 var originCube;
+var manual = false;
 var loader = new THREE.TextureLoader();
 $(document).ready(function(){
 
@@ -297,16 +298,17 @@ $(document).ready(function(){
     skyBox.add( skyMesh2 );
     skyBox.add( skyMesh3 );
     skyBox.add( skyMesh4 );
-    scene.add(skyBox);
+    //scene.add(skyBox);
     skyBox.rotation.x = Math.PI;
 
     //skysphere
-    // var skyBox = new THREE.Mesh(
-    //   new THREE.SphereBufferGeometry( boxSize, 32, 32),
-    //   sky.material
-    // );
-    // scene.add(skyBox);
-    // skyBox.rotation.x = Math.PI;
+    var skyBox = new THREE.Mesh(
+      new THREE.SphereBufferGeometry( boxSize, 32, 32),
+      sky.material
+    );
+    skyBox.material.side = THREE.BackSide;
+    scene.add(skyBox);
+    skyBox.rotation.x = Math.PI;
 
     /////////
     //panel//
@@ -326,12 +328,18 @@ $(document).ready(function(){
     };
 
     gui.add(params, 'Hours').min(0).max(23).step(1).onChange(function(){
+      manual = true;
       sky.render({hours:params.Hours, minutes:params.Minutes});
+      hours = params.Hours;
     });
 
     gui.add(params, 'Minutes').min(0).max(60).step(1).onChange(function(){
+      manual = true;
       sky.render({hours:params.Hours, minutes:params.Minutes});
+      minutes = params.Minutes;
     });
+
+    sky.render();
 
     ///////////
     //animate//
@@ -341,8 +349,10 @@ $(document).ready(function(){
     var render = function () {
         var delta = clock.getDelta();
 
-        hours = now.getHours();
-        minutes = now.getMinutes();
+        if (!manual){
+            hours = now.getHours();
+            minutes = now.getMinutes();
+        }
 
 
         requestAnimationFrame( render );
@@ -351,15 +361,16 @@ $(document).ready(function(){
         stats.update();
 
         /*                                                            //this comment can use to reflect real world day/night condition
-        var currentMinute = calculateMinute(hours, minute);
         skyUpdate(currentMinute);
-        sunUpdate(currentMinute);
         */
+        var currentMinute = calculateMinute(hours, minutes);
+        sunUpdate(currentMinute);
+        
 
-        if (minutes != lastMinute){
-            sky.render();
-            lastMinute = minutes;
-        }
+        // if (minutes != lastMinute){
+        //     sky.render();
+        //     lastMinute = minutes;
+        // }
 
 
     };

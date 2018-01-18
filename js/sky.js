@@ -170,7 +170,7 @@ THREE.Sky.prototype.render = function(options){
       }
       
       this.hours = hours;
-
+      console.log(this.hours+"||"+this.previousHours)
       for (var i = 0 ; i < 5; i++){
         if (i < this.grads[this.previousHours].length){
             this.material.uniforms.previousColors.value[i] = this.grads[this.previousHours][i].color;
