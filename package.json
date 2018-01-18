@@ -4,7 +4,10 @@
   "description": "Simulate day/night transition in Minecraft",
   "main": "index.js",
   "scripts": {
-    "start": "http-server ./ -c-1"
+    "start": "http-server ./ -c-1",
+    "build": "webpack",
+    "build:prod": "webpack -p",
+    "dev": "webpack-dev-server"
   },
   "repository": {
     "type": "git",
@@ -20,6 +23,19 @@
   },
   "homepage": "https://github.com/johnhckuo/Day-and-Night#readme",
   "devDependencies": {
-    "http-server": "^0.11.1"
+    "clean-webpack-plugin": "^0.1.17",
+    "css-loader": "^0.28.9",
+    "dat.gui": "^0.6.5",
+    "extract-text-webpack-plugin": "^3.0.2",
+    "html-webpack-plugin": "^2.30.1",
+    "http-server": "^0.11.1",
+    "jquery": "^3.2.1",
+    "node-sass": "^4.7.2",
+    "sass-loader": "^6.0.6",
+    "style-loader": "^0.19.1",
+    "three": "^0.89.0",
+    "url-loader": "^0.6.2",
+    "webpack": "^3.10.0",
+    "webpack-dev-server": "^2.11.0"
   }
 }

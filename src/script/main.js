@@ -1,4 +1,20 @@
-var scene, camera, renderer, controls, stats;
+import '../scss/reset.scss';
+import '../scss/main.scss';
+import './dat.gui.min.js';
+import './sky.js';
+
+import grass from "../img/grass.jpg";
+import dirt from "../img/dirt.jpg";
+import grasstop from "../img/grasstop.jpg";
+
+import moon from "../img/moon.jpg";
+import dat from 'dat.gui/build/dat.gui.js'
+import Stats from './Stats.js';
+
+import 'three';
+import 'three/OrbitControls';
+
+var scene, camera, renderer, controls, stats, sky;
 var boxSize = 5000;
 var planeY = -boxSize/2 ;
 var now, hours, minutes, lastMinute;
@@ -9,7 +25,7 @@ var totalMinute = 1440;
 var starParticle;
 var cubeNumber =400;
 var originCube;
-var manual = false;
+var manual = false, speedUp = true;
 var loader = new THREE.TextureLoader();
 $(document).ready(function(){
 
@@ -20,7 +36,7 @@ $(document).ready(function(){
     //////////
 
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 10000 );
-    camera.position.z = -500;
+    camera.position.z = -1000;
     camera.position.y = 1000;
    // camera.position.y = -boxSize/2;
 
@@ -113,7 +129,7 @@ $(document).ready(function(){
     var geometry = new THREE.SphereGeometry( 25, 32, 32 );
     var material = new THREE.MeshBasicMaterial( { color: 0xFFFF33, vertexColors: THREE.FaceColors } );
     var moonMaterial =  new THREE.MeshLambertMaterial();
-    moonMaterial.map    = loader.load('img/moon.jpg')
+    moonMaterial.map    = loader.load(moon)
 
 
     // parent
@@ -205,12 +221,12 @@ $(document).ready(function(){
 
 
     materialArray = [
-                    new THREE.MeshLambertMaterial( { map: loader.load( 'img/grass.jpg' ) ,side: THREE.FrontSide } ), // right
-                    new THREE.MeshLambertMaterial( { map: loader.load( 'img/grass.jpg' ) ,side: THREE.FrontSide } ), // left
-                    new THREE.MeshLambertMaterial( { map: loader.load( 'img/grasstop.jpg' ) ,side: THREE.FrontSide } ), // top
-                    new THREE.MeshLambertMaterial( { map: loader.load( 'img/dirt.jpg' ) ,side: THREE.FrontSide } ), // bottom
-                    new THREE.MeshLambertMaterial( { map: loader.load( 'img/grass.jpg' ) ,side: THREE.FrontSide } ), // back
-                    new THREE.MeshLambertMaterial( { map: loader.load( 'img/grass.jpg' ) ,side: THREE.FrontSide } )  // front
+                    new THREE.MeshLambertMaterial( { map: loader.load( grass ) ,side: THREE.FrontSide } ), // right
+                    new THREE.MeshLambertMaterial( { map: loader.load( grass ) ,side: THREE.FrontSide } ), // left
+                    new THREE.MeshLambertMaterial( { map: loader.load( grasstop ) ,side: THREE.FrontSide } ), // top
+                    new THREE.MeshLambertMaterial( { map: loader.load( dirt ) ,side: THREE.FrontSide } ), // bottom
+                    new THREE.MeshLambertMaterial( { map: loader.load( grass ) ,side: THREE.FrontSide } ), // back
+                    new THREE.MeshLambertMaterial( { map: loader.load( grass ) ,side: THREE.FrontSide } )  // front
 
                 ];
 
@@ -233,10 +249,6 @@ $(document).ready(function(){
             planeCube.updateMatrix();
             plane_geometry.merge(planeCube.geometry, planeCube.matrix);
         }
-
-
-
-
         //sunLight.castShadow = true;
     }
 
@@ -324,8 +336,13 @@ $(document).ready(function(){
 
     var params = {
         Hours: hours,
-        Minutes: minutes
+        Minutes: minutes,
+        SpeedUp: speedUp
     };
+
+    gui.add(params, 'SpeedUp').onFinishChange(function(){
+      speedUp = params.SpeedUp;
+    });
 
     gui.add(params, 'Hours').min(0).max(23).step(1).onChange(function(){
       manual = true;
@@ -339,8 +356,6 @@ $(document).ready(function(){
       minutes = params.Minutes;
     });
 
-    sky.render();
-
     ///////////
     //animate//
     ///////////
@@ -349,11 +364,20 @@ $(document).ready(function(){
     var render = function () {
         var delta = clock.getDelta();
 
-        if (!manual){
+        if (speedUp){
+          minutes = minutes+1;
+          if (minutes >= 60){
+            hours = (hours+1)%24;
+            minutes = 0;
+          }
+          sky.render({hours:hours, minutes:minutes});
+        }else if (!manual){
             hours = now.getHours();
             minutes = now.getMinutes();
         }
 
+        originCube.rotation.x += delta;
+        originCube.rotation.y += delta;
 
         requestAnimationFrame( render );
         renderer.render(scene, camera);
@@ -365,7 +389,7 @@ $(document).ready(function(){
         */
         var currentMinute = calculateMinute(hours, minutes);
         sunUpdate(currentMinute);
-        
+
 
         // if (minutes != lastMinute){
         //     sky.render();

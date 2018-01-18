@@ -168,9 +168,9 @@ THREE.Sky.prototype.render = function(options){
       }else{
         this.previousHours = (hours + 1) % 24;
       }
-      
+
       this.hours = hours;
-      console.log(this.hours+"||"+this.previousHours)
+
       for (var i = 0 ; i < 5; i++){
         if (i < this.grads[this.previousHours].length){
             this.material.uniforms.previousColors.value[i] = this.grads[this.previousHours][i].color;
