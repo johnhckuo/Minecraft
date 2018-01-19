@@ -7,7 +7,7 @@
     "start": "http-server ./ -c-1",
     "build": "webpack",
     "build:prod": "webpack -p",
-    "dev": "webpack-dev-server"
+    "dev": "webpack-dev-server --devtool eval --progress --colors --content-base build"
   },
   "repository": {
     "type": "git",

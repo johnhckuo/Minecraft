@@ -236,28 +236,39 @@ $(document).ready(function(){
     var step = boxSize/cubeSize;
 
 
-    for (var i = -boxSize/2; i < boxSize/2; i+=step)
-    {
+    // for (var i = -boxSize/2; i < boxSize/2; i+=step)
+    // {
+    //     var planeCube = new THREE.Mesh( geometry, material );
+    //     planeCube.castShadow = true;
+    //     planeCube.receiveShadow = true;
+
+    //     planeCube.position.y = planeY;
+    //     planeCube.position.x = cubeSize + i;
+    //     for (var j = -boxSize/2 ; j < boxSize/2 ; j+=step){
+    //         planeCube.position.z = cubeSize + j;
+    //         planeCube.updateMatrix();
+    //         plane_geometry.merge(planeCube.geometry, planeCube.matrix);
+    //     }
+    //     //sunLight.castShadow = true;
+    // }
+
+    //plane_geometry = generateHeight(plane_geometry);
+
+    for (var i = -boxSize/2; i < boxSize/2; i+=step){
         var planeCube = new THREE.Mesh( geometry, material );
         planeCube.castShadow = true;
         planeCube.receiveShadow = true;
-
-        planeCube.position.y = planeY;
         planeCube.position.x = cubeSize + i;
-        for (var j = -boxSize/2 ; j < boxSize/2 ; j+=step){
-            planeCube.position.z = cubeSize + j;
-            planeCube.updateMatrix();
-            plane_geometry.merge(planeCube.geometry, planeCube.matrix);
-        }
-        //sunLight.castShadow = true;
-    }
+        planeCube.position.y = planeY;
+        planeCube.position.z = cubeSize + i;
 
-    plane_geometry = generateHeight(plane_geometry);
+        plane_geometry.merge(planeCube.geometry, planeCube.matrix);
+    }
 
     var plane = new THREE.Mesh( plane_geometry, material );
     plane.castShadow = true;
     plane.receiveShadow = true;
-    //scene.add( plane );
+    scene.add( plane );
 
     //////////////
     //originCube//
