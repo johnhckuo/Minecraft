@@ -3,8 +3,8 @@ import '../scss/main.scss';
 import './sky.js';
 
 import grass from "../img/grass.png";
-
 import moon from "../img/moon.jpg";
+
 import dat from 'dat.gui/build/dat.gui.js'
 import Stats from './Stats.js';
 import ImprovedNoise from './ImprovedNoise.js';
@@ -25,13 +25,10 @@ var cubeNumber =400;
 var originCube;
 var manual = false, speedUp = true;
 var loader = new THREE.TextureLoader();
-var worldWidth = boxSize/10, worldDepth = boxSize/10;
-var worldHalfWidth = worldWidth / 2, worldHalfDepth = worldDepth / 2;
-var cubeSize = 50;
-var data = generateHeight( worldWidth, worldDepth );
+var worldWidth = boxSize/2, worldDepth = boxSize/2;
+var cubeSize = 50, terrainMaxHeight = 10;
 
-function test(){
-    var geometry = new THREE.BoxGeometry( cubeSize, cubeSize, cubeSize );
+function terrain_init(){
 
     var plane_geometry = new THREE.Geometry();
 
@@ -41,21 +38,36 @@ function test(){
     texture.format = THREE.RGBFormat;
     texture.minFilter = THREE.LinearFilter;
     texture.magFilter = THREE.LinearFilter;
-    
-    var cube = cube_init(texture);
 
-    for (var i = 0 ; i < 5000 ; i++){
-        cube.position.set(Math.random()*boxSize, Math.random()*boxSize, Math.random()*boxSize);
+    var cube = cube_init(texture);
+    var height = generateHeight();
+    for (var i = 0 ; i < worldWidth ; i+=cubeSize){
+      for (var j = 0 ; j < worldDepth ; j+=cubeSize){
+        var y = height[ (i * worldWidth + j)/cubeSize ];
+        cube.position.set(i, y, j);
         cube.updateMatrix();
         plane_geometry.merge(cube.geometry, cube.matrix);
+        for (var w = -(terrainMaxHeight*cubeSize)/2 ; w < y ; w += cubeSize){
+          cube.position.set(i, w, j);
+          cube.updateMatrix();
+          plane_geometry.merge(cube.geometry, cube.matrix);
+        }
+      }
     }
-
-
     var material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.FrontSide });
-    var plane = new THREE.Mesh( plane_geometry, material );
+    var terrain = new THREE.Mesh( plane_geometry, material );
+    terrain.position.set(-worldWidth/ 2, 0, -worldDepth/ 2);
+    scene.add(terrain);
+}
 
-    scene.add(plane);
-    //scene.add(plane);
+function generateHeight(){
+    var perlin = new ImprovedNoise();
+    var height = [];
+    var totalPixel = (worldDepth * worldWidth) / cubeSize;
+    for (var i = 0 ; i < totalPixel ; i++){
+      height.push(Math.floor(perlin.noise(i / totalPixel, i / totalPixel, Math.random()) * terrainMaxHeight) * cubeSize);
+    }
+    return height;
 }
 
 function cube_init(texture) {
@@ -103,36 +115,6 @@ function cube_init(texture) {
     var cube = new THREE.Mesh(geometry, material);
 
     return cube;
-
-}
-
-function getY( x, z ) {
-
-    return ( data[ x + z * worldWidth ] * 0.2 ) | 0;
-
-}
-
-function generateHeight( width, height ) {
-
-    var data = [], perlin = new ImprovedNoise(),
-    size = width * height, quality = 2, z = Math.random() * 100;
-
-    for ( var j = 0; j < 4; j ++ ) {
-
-        if ( j == 0 ) for ( var i = 0; i < size; i ++ ) data[ i ] = 0;
-
-        for ( var i = 0; i < size; i ++ ) {
-
-            var x = i % width, y = ( i / width ) | 0;
-            data[ i ] += perlin.noise( x / quality, y / quality, z ) * quality;
-
-        }
-
-        quality *= 4
-
-    }
-
-    return data;
 
 }
 
@@ -317,66 +299,14 @@ $(document).ready(function(){
     ///////
     //fog//
     ///////
-    scene.fog = new THREE.FogExp2( 0xffffff, 0.00001 );
 
+    scene.fog = new THREE.FogExp2( 0xffffff, 0.00001 );
 
     //////////
     //ground//
     //////////
 
-
-    // var geometry = new THREE.BoxGeometry( cubeSize, cubeSize, cubeSize );
-
-
-    // materialArray = [
-    //                 new THREE.MeshLambertMaterial( { map: loader.load( grass ) ,side: THREE.FrontSide } ), // right
-    //                 new THREE.MeshLambertMaterial( { map: loader.load( grass ) ,side: THREE.FrontSide } ), // left
-    //                 new THREE.MeshLambertMaterial( { map: loader.load( grasstop ) ,side: THREE.FrontSide } ), // top
-    //                 new THREE.MeshLambertMaterial( { map: loader.load( dirt ) ,side: THREE.FrontSide } ), // bottom
-    //                 new THREE.MeshLambertMaterial( { map: loader.load( grass ) ,side: THREE.FrontSide } ), // back
-    //                 new THREE.MeshLambertMaterial( { map: loader.load( grass ) ,side: THREE.FrontSide } )  // front
-
-    //             ];
-
-    // var material = new THREE.MeshFaceMaterial( materialArray );
-
-    // var plane_geometry = new THREE.Geometry();
-    // var step = boxSize/cubeSize;
-
-
-    // // for (var i = -boxSize/2; i < boxSize/2; i+=step)
-    // // {
-    // //     var planeCube = new THREE.Mesh( geometry, material );
-    // //     planeCube.castShadow = true;
-    // //     planeCube.receiveShadow = true;
-
-    // //     planeCube.position.y = planeY;
-    // //     planeCube.position.x = cubeSize + i;
-    // //     for (var j = -boxSize/2 ; j < boxSize/2 ; j+=step){
-    // //         planeCube.position.z = cubeSize + j;
-    // //         planeCube.updateMatrix();
-    // //         plane_geometry.merge(planeCube.geometry, planeCube.matrix);
-    // //     }
-    // //     //sunLight.castShadow = true;
-    // // }
-
-    // //plane_geometry = generateHeight(plane_geometry);
-
-    // for (var i = -boxSize/2; i < boxSize/2; i+=step){
-    //     var planeCube = new THREE.Mesh( geometry, material );
-    //     planeCube.castShadow = true;
-    //     planeCube.receiveShadow = true;
-    //     planeCube.position.x = cubeSize + i;
-    //     planeCube.position.y = planeY;
-    //     planeCube.position.z = cubeSize + i;
-
-    //     plane_geometry.merge(planeCube.geometry, planeCube.matrix);
-    // }
-
-    // var plane = new THREE.Mesh( plane_geometry, material );
-    // plane.castShadow = true;
-    // plane.receiveShadow = true;
-    // //scene.add( plane );
+    terrain_init();
 
     //////////////
     //originCube//
@@ -392,8 +322,6 @@ $(document).ready(function(){
     moonLight.target = originCube;
     controls.target = new THREE.Vector3(0, planeY+100, 0);    //set camera lookAt()
 
-    //test
-    test();
     //////////
     //skyBox//
     //////////
@@ -504,12 +432,12 @@ $(document).ready(function(){
         renderer.render(scene, camera);
         controls.update();
         stats.update();
-        console.log("textures"+renderer.info.memory.textures)
-        console.log("geometry"+renderer.info.memory.geometries)
-        console.log("Calls: "   + renderer.info.render.calls);
-        console.log("Vertices: "    + renderer.info.render.vertices)
-        console.log("Faces: "   + renderer.info.render.faces);
-        console.log("Points: "  + renderer.info.render.points);
+        // console.log("textures"+renderer.info.memory.textures)
+        // console.log("geometry"+renderer.info.memory.geometries)
+        // console.log("Calls: "   + renderer.info.render.calls);
+        // console.log("Vertices: "    + renderer.info.render.vertices)
+        // console.log("Faces: "   + renderer.info.render.faces);
+        // console.log("Points: "  + renderer.info.render.points);
         /*                                                            //this comment can use to reflect real world day/night condition
         skyUpdate(currentMinute);
         */
@@ -528,64 +456,6 @@ $(document).ready(function(){
     render();
     window.addEventListener('resize', onWindowResize, false);
 });
-
-// function generateHeight(plane_geometry){
-
-//     var cubeCoordinate = [];
-
-
-//     var cubeSize = 50;
-//     var geometry = new THREE.BoxGeometry( cubeSize, cubeSize, cubeSize );
-//     var x,y,z;
-
-
-//     var material = new THREE.MeshFaceMaterial( materialArray );
-
-
-//     for (var i = 0; i < cubeNumber; i++)
-//     {
-//         var planeCube = new THREE.Mesh( geometry, material );
-//         planeCube.castShadow = true;
-//         planeCube.receiveShadow = true;
-
-
-//         x = Math.floor((Math.random() * boxSize - boxSize/2)/cubeSize)*cubeSize;
-//         y = planeY + cubeSize;
-//         z = Math.floor((Math.random() * boxSize - boxSize/2)/cubeSize)*cubeSize;
-
-
-//         for (var j = 0 ; j < cubeCoordinate.length; j++){
-//             if (x == cubeCoordinate[j].x && z == cubeCoordinate[j].z){
-//                 if (y <= cubeCoordinate[j].y){
-//                     y = cubeCoordinate[j].y + cubeSize;
-
-//                 }
-//             }
-
-
-//         }
-//         planeCube.position.x = x;
-//         planeCube.position.y = y;
-//         planeCube.position.z = z;
-
-//         planeCube.updateMatrix();
-//         cubeCoordinate.push(planeCube.position);
-//         plane_geometry.merge(planeCube.geometry, planeCube.matrix);
-
-
-
-
-
-//         //sunLight.castShadow = true;
-//     }
-//     return plane_geometry;
-
-
-
-
-
-// }
-
 
 function createStar(type) {
     var starNumber;
