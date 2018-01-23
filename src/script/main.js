@@ -1,15 +1,13 @@
 import '../scss/reset.scss';
 import '../scss/main.scss';
-import './dat.gui.min.js';
 import './sky.js';
 
-import grass from "../img/grass.jpg";
-import dirt from "../img/dirt.jpg";
-import grasstop from "../img/grasstop.jpg";
+import grass from "../img/grass.png";
 
 import moon from "../img/moon.jpg";
 import dat from 'dat.gui/build/dat.gui.js'
 import Stats from './Stats.js';
+import ImprovedNoise from './ImprovedNoise.js';
 
 import 'three';
 import 'three/OrbitControls';
@@ -27,6 +25,117 @@ var cubeNumber =400;
 var originCube;
 var manual = false, speedUp = true;
 var loader = new THREE.TextureLoader();
+var worldWidth = boxSize/10, worldDepth = boxSize/10;
+var worldHalfWidth = worldWidth / 2, worldHalfDepth = worldDepth / 2;
+var cubeSize = 50;
+var data = generateHeight( worldWidth, worldDepth );
+
+function test(){
+    var geometry = new THREE.BoxGeometry( cubeSize, cubeSize, cubeSize );
+
+    var plane_geometry = new THREE.Geometry();
+
+    var texture = new THREE.TextureLoader().load( grass );
+    // texture.magFilter = THREE.NearestFilter;
+    // texture.minFilter = THREE.LinearMipMapLinearFilter;
+    texture.format = THREE.RGBFormat;
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    
+    var cube = cube_init(texture);
+
+    for (var i = 0 ; i < 5000 ; i++){
+        cube.position.set(Math.random()*boxSize, Math.random()*boxSize, Math.random()*boxSize);
+        cube.updateMatrix();
+        plane_geometry.merge(cube.geometry, cube.matrix);
+    }
+
+
+    var material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.FrontSide });
+    var plane = new THREE.Mesh( plane_geometry, material );
+
+    scene.add(plane);
+    //scene.add(plane);
+}
+
+function cube_init(texture) {
+
+    var geometry = new THREE.CubeGeometry(cubeSize, cubeSize, cubeSize);
+    var material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.FrontSide });
+
+    var oneFourth = 1/4;
+    var half = 1/2;
+    var threeFourth = 3/4;
+
+    var oneThird = 1/3;
+    var twoThird = 2/3;
+
+    // each face has been shifted counter clockwise once
+    var face1 = [new THREE.Vector2(0, twoThird), new THREE.Vector2(0, oneThird), new THREE.Vector2(oneFourth, oneThird), new THREE.Vector2(oneFourth, twoThird)];
+    var face2 = [new THREE.Vector2(oneFourth, twoThird), new THREE.Vector2(oneFourth, oneThird), new THREE.Vector2(half, oneThird), new THREE.Vector2(half, twoThird)];
+    var top = [new THREE.Vector2(oneFourth, 1), new THREE.Vector2(oneFourth, twoThird), new THREE.Vector2(half, twoThird), new THREE.Vector2(half, 1)];
+    var bottom = [new THREE.Vector2(oneFourth, oneThird), new THREE.Vector2(oneFourth, 0), new THREE.Vector2(half, 0), new THREE.Vector2(half, oneThird)];
+    var face3 = [new THREE.Vector2(half, twoThird), new THREE.Vector2(half, oneThird), new THREE.Vector2(threeFourth, oneThird), new THREE.Vector2(threeFourth, twoThird)];
+    var face4 = [new THREE.Vector2(threeFourth, twoThird), new THREE.Vector2(threeFourth, oneThird), new THREE.Vector2(1, oneThird), new THREE.Vector2(1, twoThird)];
+
+    //This clears out any UV mapping that may have already existed on the cube.
+    geometry.faceVertexUvs[0] = [];
+
+    //UV mapping start
+    geometry.faceVertexUvs[0][0] = [face1[0], face1[1], face1[3]];
+    geometry.faceVertexUvs[0][1] = [face1[1], face1[2], face1[3]];
+
+    geometry.faceVertexUvs[0][2] = [face2[0], face2[1], face2[3]];
+    geometry.faceVertexUvs[0][3] = [face2[1], face2[2], face2[3]];
+
+    geometry.faceVertexUvs[0][4] = [top[0], top[1], top[3]];
+    geometry.faceVertexUvs[0][5] = [top[1], top[2], top[3]];
+
+    geometry.faceVertexUvs[0][6] = [bottom[0], bottom[1], bottom[3]];
+    geometry.faceVertexUvs[0][7] = [bottom[1], bottom[2], bottom[3]];
+
+    geometry.faceVertexUvs[0][8] = [face3[0], face3[1], face3[3]];
+    geometry.faceVertexUvs[0][9] = [face3[1], face3[2], face3[3]];
+
+    geometry.faceVertexUvs[0][10] = [face4[0], face4[1], face4[3]];
+    geometry.faceVertexUvs[0][11] = [face4[1], face4[2], face4[3]];
+
+    var cube = new THREE.Mesh(geometry, material);
+
+    return cube;
+
+}
+
+function getY( x, z ) {
+
+    return ( data[ x + z * worldWidth ] * 0.2 ) | 0;
+
+}
+
+function generateHeight( width, height ) {
+
+    var data = [], perlin = new ImprovedNoise(),
+    size = width * height, quality = 2, z = Math.random() * 100;
+
+    for ( var j = 0; j < 4; j ++ ) {
+
+        if ( j == 0 ) for ( var i = 0; i < size; i ++ ) data[ i ] = 0;
+
+        for ( var i = 0; i < size; i ++ ) {
+
+            var x = i % width, y = ( i / width ) | 0;
+            data[ i ] += perlin.noise( x / quality, y / quality, z ) * quality;
+
+        }
+
+        quality *= 4
+
+    }
+
+    return data;
+
+}
+
 $(document).ready(function(){
 
     scene = new THREE.Scene();
@@ -216,59 +325,58 @@ $(document).ready(function(){
     //////////
 
 
-    var cubeSize = 50;
-    var geometry = new THREE.BoxGeometry( cubeSize, cubeSize, cubeSize );
+    // var geometry = new THREE.BoxGeometry( cubeSize, cubeSize, cubeSize );
 
 
-    materialArray = [
-                    new THREE.MeshLambertMaterial( { map: loader.load( grass ) ,side: THREE.FrontSide } ), // right
-                    new THREE.MeshLambertMaterial( { map: loader.load( grass ) ,side: THREE.FrontSide } ), // left
-                    new THREE.MeshLambertMaterial( { map: loader.load( grasstop ) ,side: THREE.FrontSide } ), // top
-                    new THREE.MeshLambertMaterial( { map: loader.load( dirt ) ,side: THREE.FrontSide } ), // bottom
-                    new THREE.MeshLambertMaterial( { map: loader.load( grass ) ,side: THREE.FrontSide } ), // back
-                    new THREE.MeshLambertMaterial( { map: loader.load( grass ) ,side: THREE.FrontSide } )  // front
+    // materialArray = [
+    //                 new THREE.MeshLambertMaterial( { map: loader.load( grass ) ,side: THREE.FrontSide } ), // right
+    //                 new THREE.MeshLambertMaterial( { map: loader.load( grass ) ,side: THREE.FrontSide } ), // left
+    //                 new THREE.MeshLambertMaterial( { map: loader.load( grasstop ) ,side: THREE.FrontSide } ), // top
+    //                 new THREE.MeshLambertMaterial( { map: loader.load( dirt ) ,side: THREE.FrontSide } ), // bottom
+    //                 new THREE.MeshLambertMaterial( { map: loader.load( grass ) ,side: THREE.FrontSide } ), // back
+    //                 new THREE.MeshLambertMaterial( { map: loader.load( grass ) ,side: THREE.FrontSide } )  // front
 
-                ];
+    //             ];
 
-    var material = new THREE.MeshFaceMaterial( materialArray );
+    // var material = new THREE.MeshFaceMaterial( materialArray );
 
-    var plane_geometry = new THREE.Geometry();
-    var step = boxSize/cubeSize;
+    // var plane_geometry = new THREE.Geometry();
+    // var step = boxSize/cubeSize;
 
 
-    // for (var i = -boxSize/2; i < boxSize/2; i+=step)
-    // {
+    // // for (var i = -boxSize/2; i < boxSize/2; i+=step)
+    // // {
+    // //     var planeCube = new THREE.Mesh( geometry, material );
+    // //     planeCube.castShadow = true;
+    // //     planeCube.receiveShadow = true;
+
+    // //     planeCube.position.y = planeY;
+    // //     planeCube.position.x = cubeSize + i;
+    // //     for (var j = -boxSize/2 ; j < boxSize/2 ; j+=step){
+    // //         planeCube.position.z = cubeSize + j;
+    // //         planeCube.updateMatrix();
+    // //         plane_geometry.merge(planeCube.geometry, planeCube.matrix);
+    // //     }
+    // //     //sunLight.castShadow = true;
+    // // }
+
+    // //plane_geometry = generateHeight(plane_geometry);
+
+    // for (var i = -boxSize/2; i < boxSize/2; i+=step){
     //     var planeCube = new THREE.Mesh( geometry, material );
     //     planeCube.castShadow = true;
     //     planeCube.receiveShadow = true;
-
-    //     planeCube.position.y = planeY;
     //     planeCube.position.x = cubeSize + i;
-    //     for (var j = -boxSize/2 ; j < boxSize/2 ; j+=step){
-    //         planeCube.position.z = cubeSize + j;
-    //         planeCube.updateMatrix();
-    //         plane_geometry.merge(planeCube.geometry, planeCube.matrix);
-    //     }
-    //     //sunLight.castShadow = true;
+    //     planeCube.position.y = planeY;
+    //     planeCube.position.z = cubeSize + i;
+
+    //     plane_geometry.merge(planeCube.geometry, planeCube.matrix);
     // }
 
-    //plane_geometry = generateHeight(plane_geometry);
-
-    for (var i = -boxSize/2; i < boxSize/2; i+=step){
-        var planeCube = new THREE.Mesh( geometry, material );
-        planeCube.castShadow = true;
-        planeCube.receiveShadow = true;
-        planeCube.position.x = cubeSize + i;
-        planeCube.position.y = planeY;
-        planeCube.position.z = cubeSize + i;
-
-        plane_geometry.merge(planeCube.geometry, planeCube.matrix);
-    }
-
-    var plane = new THREE.Mesh( plane_geometry, material );
-    plane.castShadow = true;
-    plane.receiveShadow = true;
-    scene.add( plane );
+    // var plane = new THREE.Mesh( plane_geometry, material );
+    // plane.castShadow = true;
+    // plane.receiveShadow = true;
+    // //scene.add( plane );
 
     //////////////
     //originCube//
@@ -278,12 +386,14 @@ $(document).ready(function(){
     originCube.position.y = planeY+cubeSize;
     originCube.castShadow = true;
     originCube.receiveShadow = true;
-    scene.add(originCube);
+    //scene.add(originCube);
 
     sunLight.target = originCube;
     moonLight.target = originCube;
     controls.target = new THREE.Vector3(0, planeY+100, 0);    //set camera lookAt()
 
+    //test
+    test();
     //////////
     //skyBox//
     //////////
@@ -394,7 +504,12 @@ $(document).ready(function(){
         renderer.render(scene, camera);
         controls.update();
         stats.update();
-
+        console.log("textures"+renderer.info.memory.textures)
+        console.log("geometry"+renderer.info.memory.geometries)
+        console.log("Calls: "   + renderer.info.render.calls);
+        console.log("Vertices: "    + renderer.info.render.vertices)
+        console.log("Faces: "   + renderer.info.render.faces);
+        console.log("Points: "  + renderer.info.render.points);
         /*                                                            //this comment can use to reflect real world day/night condition
         skyUpdate(currentMinute);
         */
@@ -414,62 +529,62 @@ $(document).ready(function(){
     window.addEventListener('resize', onWindowResize, false);
 });
 
-function generateHeight(plane_geometry){
+// function generateHeight(plane_geometry){
 
-    var cubeCoordinate = [];
-
-
-    var cubeSize = 50;
-    var geometry = new THREE.BoxGeometry( cubeSize, cubeSize, cubeSize );
-    var x,y,z;
+//     var cubeCoordinate = [];
 
 
-    var material = new THREE.MeshFaceMaterial( materialArray );
+//     var cubeSize = 50;
+//     var geometry = new THREE.BoxGeometry( cubeSize, cubeSize, cubeSize );
+//     var x,y,z;
 
 
-    for (var i = 0; i < cubeNumber; i++)
-    {
-        var planeCube = new THREE.Mesh( geometry, material );
-        planeCube.castShadow = true;
-        planeCube.receiveShadow = true;
+//     var material = new THREE.MeshFaceMaterial( materialArray );
 
 
-        x = Math.floor((Math.random() * boxSize - boxSize/2)/cubeSize)*cubeSize;
-        y = planeY + cubeSize;
-        z = Math.floor((Math.random() * boxSize - boxSize/2)/cubeSize)*cubeSize;
+//     for (var i = 0; i < cubeNumber; i++)
+//     {
+//         var planeCube = new THREE.Mesh( geometry, material );
+//         planeCube.castShadow = true;
+//         planeCube.receiveShadow = true;
 
 
-        for (var j = 0 ; j < cubeCoordinate.length; j++){
-            if (x == cubeCoordinate[j].x && z == cubeCoordinate[j].z){
-                if (y <= cubeCoordinate[j].y){
-                    y = cubeCoordinate[j].y + cubeSize;
-
-                }
-            }
+//         x = Math.floor((Math.random() * boxSize - boxSize/2)/cubeSize)*cubeSize;
+//         y = planeY + cubeSize;
+//         z = Math.floor((Math.random() * boxSize - boxSize/2)/cubeSize)*cubeSize;
 
 
-        }
-        planeCube.position.x = x;
-        planeCube.position.y = y;
-        planeCube.position.z = z;
+//         for (var j = 0 ; j < cubeCoordinate.length; j++){
+//             if (x == cubeCoordinate[j].x && z == cubeCoordinate[j].z){
+//                 if (y <= cubeCoordinate[j].y){
+//                     y = cubeCoordinate[j].y + cubeSize;
 
-        planeCube.updateMatrix();
-        cubeCoordinate.push(planeCube.position);
-        plane_geometry.merge(planeCube.geometry, planeCube.matrix);
-
+//                 }
+//             }
 
 
+//         }
+//         planeCube.position.x = x;
+//         planeCube.position.y = y;
+//         planeCube.position.z = z;
 
-
-        //sunLight.castShadow = true;
-    }
-    return plane_geometry;
+//         planeCube.updateMatrix();
+//         cubeCoordinate.push(planeCube.position);
+//         plane_geometry.merge(planeCube.geometry, planeCube.matrix);
 
 
 
 
 
-}
+//         //sunLight.castShadow = true;
+//     }
+//     return plane_geometry;
+
+
+
+
+
+// }
 
 
 function createStar(type) {

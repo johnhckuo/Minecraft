@@ -63,6 +63,7 @@ module.exports = {
       			})
       	},
         {test: /\.jpg$/, use: 'url-loader?mimetype=image/jpg'},
+        {test: /\.png$/, use: 'url-loader?mimetype=image/png'},
     ],
   },
   resolve: {
