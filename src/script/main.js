@@ -13,10 +13,10 @@ import 'three';
 import 'three/OrbitControls';
 
 var scene, camera, renderer, controls, stats, sky;
-var boxSize = 5000;
+var boxSize = 3000;
 var planeY = -boxSize/2 ;
 var now, hours, minutes, lastMinute;
-var parent, sunLight, moonLight, spinRadius = boxSize/2;
+var parent, sunLight, moonLight, spinRadius = boxSize;
 var materialArray = [];
 var testCounter = 240;
 var totalMinute = 1440;
@@ -25,8 +25,9 @@ var cubeNumber =400;
 var originCube;
 var manual = false, speedUp = true;
 var loader = new THREE.TextureLoader();
-var worldWidth = boxSize/2, worldDepth = boxSize/2;
-var cubeSize = 50, terrainMaxHeight = 10;
+var worldWidth = boxSize, worldDepth = boxSize;
+var cubeSize = 100, terrainMaxHeight = 5;
+var seed = 0.0, terrain;
 
 function terrain_init(){
 
@@ -41,31 +42,35 @@ function terrain_init(){
 
     var cube = cube_init(texture);
     var height = generateHeight();
-    for (var i = 0 ; i < worldWidth ; i+=cubeSize){
-      for (var j = 0 ; j < worldDepth ; j+=cubeSize){
-        var y = height[ (i * worldWidth + j)/cubeSize ];
-        cube.position.set(i, y, j);
+    for (var i = 0 ; i < worldWidth/cubeSize ; i++){
+      for (var j = 0 ; j < worldDepth/cubeSize ; j++){
+        var y = height[ i * worldDepth + j ];
+        cube.position.set(i * cubeSize, y, j * cubeSize);
         cube.updateMatrix();
         plane_geometry.merge(cube.geometry, cube.matrix);
-        for (var w = -(terrainMaxHeight*cubeSize)/2 ; w < y ; w += cubeSize){
-          cube.position.set(i, w, j);
+        for (var w = -terrainMaxHeight*cubeSize ; w < y ; w += cubeSize){
+          cube.position.set(i * cubeSize, w, j * cubeSize);
           cube.updateMatrix();
           plane_geometry.merge(cube.geometry, cube.matrix);
         }
       }
     }
-    var material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.FrontSide });
-    var terrain = new THREE.Mesh( plane_geometry, material );
-    terrain.position.set(-worldWidth/ 2, 0, -worldDepth/ 2);
+    var material = new THREE.MeshLambertMaterial({ map: texture, side: THREE.FrontSide });
+    terrain = new THREE.Mesh( plane_geometry, material );
+    terrain.position.set(-worldWidth/ 2, -terrainMaxHeight*cubeSize/2, -worldDepth/ 2);
     scene.add(terrain);
+    terrain.castShadow = true;
+    terrain.receiveShadow = true;
 }
 
 function generateHeight(){
     var perlin = new ImprovedNoise();
     var height = [];
-    var totalPixel = (worldDepth * worldWidth) / cubeSize;
-    for (var i = 0 ; i < totalPixel ; i++){
-      height.push(Math.floor(perlin.noise(i / totalPixel, i / totalPixel, Math.random()) * terrainMaxHeight) * cubeSize);
+    var quality = 0.1;
+    for (var i = 0 ; i < worldWidth ; i++){
+        for (var j = 0 ; j < worldDepth ; j++){
+            height.push(Math.floor(perlin.noise(i * quality, j * quality, seed) * terrainMaxHeight) * cubeSize);
+        }
     }
     return height;
 }
@@ -113,7 +118,8 @@ function cube_init(texture) {
     geometry.faceVertexUvs[0][11] = [face4[1], face4[2], face4[3]];
 
     var cube = new THREE.Mesh(geometry, material);
-
+    cube.castShadow = true;
+    cube.receiveShadow = true;
     return cube;
 
 }
@@ -126,7 +132,7 @@ $(document).ready(function(){
     //camera//
     //////////
 
-    camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 10000 );
+    camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 100, 10000 );
     camera.position.z = -1000;
     camera.position.y = 1000;
    // camera.position.y = -boxSize/2;
@@ -159,59 +165,49 @@ $(document).ready(function(){
 
     controls = new THREE.OrbitControls( camera, renderer.domElement );
 
+    /////////////////
+    //ambient light//
+    /////////////////
+
+    var light = new THREE.AmbientLight( 0x081640 ); // soft moon light
+    scene.add( light );
+
     ////////////
     //sunLight//
     ////////////
+    var shadowQuality = 512;
 
     sunLight = new THREE.DirectionalLight(0xffffff, 1);
-    sunLight.position.set(0, -spinRadius, 200);
- //   sunLight.position.multiplyScalar(1.3);
+    sunLight.position.set(0, -spinRadius, 0);
 
     sunLight.castShadow = true;
-   // sunLight.shadowCameraVisible = true;
-
-    sunLight.shadow.mapSize.width = 2048;
-    sunLight.shadow.mapSize.height = 2048;
-
-    var sunlightRange = boxSize/2;
-
+    sunLight.shadow.mapSize.width = shadowQuality;
+    sunLight.shadow.mapSize.height = shadowQuality;
+    sunLight.shadow.camera.near = 0.5;    // default
+    sunLight.shadow.camera.far = boxSize;     // default
+    var sunlightRange = boxSize;
     sunLight.shadow.camera.left = -sunlightRange;
     sunLight.shadow.camera.right = sunlightRange;
     sunLight.shadow.camera.top = sunlightRange;
     sunLight.shadow.camera.bottom = -sunlightRange;
-
- //   sunLight.shadowCameraFar = 1000;
-    scene.add(sunLight);
-
-
 
     /////////////
     //moonlight//
     /////////////
 
 
-    moonLight = new THREE.DirectionalLight(0xffffff, 0.1);
-    moonLight.position.set(0, spinRadius, 200);
- //   moonLight.position.multiplyScalar(1.3);
-
+    moonLight = new THREE.DirectionalLight(0x081640, 0.1);
+    moonLight.position.set(0, spinRadius, 0);
     moonLight.castShadow = true;
-   // moonLight.shadowCameraVisible = true;
-
-    moonLight.shadow.mapSize.width = 2048;
-    moonLight.shadow.mapSize.height = 2048;
-
-    var moonlightRange = boxSize/2;
-
+    moonLight.shadow.mapSize.width = shadowQuality;
+    moonLight.shadow.mapSize.height = shadowQuality;
+    moonLight.shadow.camera.near = 0.5;    // default
+    moonLight.shadow.camera.far = boxSize;     // default
+    var moonlightRange = boxSize;
     moonLight.shadow.camera.left = -moonlightRange;
     moonLight.shadow.camera.right = moonlightRange;
     moonLight.shadow.camera.top = moonlightRange;
     moonLight.shadow.camera.bottom = -moonlightRange;
-
- //   moonLight.shadowCameraFar = 1000;
-    scene.add(moonLight);
-
-
-
 
     ////////////
     //sun&moon//
@@ -220,35 +216,33 @@ $(document).ready(function(){
     var geometry = new THREE.SphereGeometry( 25, 32, 32 );
     var material = new THREE.MeshBasicMaterial( { color: 0xFFFF33, vertexColors: THREE.FaceColors } );
     var moonMaterial =  new THREE.MeshLambertMaterial();
-    moonMaterial.map    = loader.load(moon)
+    moonMaterial.map    = loader.load(moon);
 
+    var Sun = new THREE.Mesh( geometry, material );
+    var Moon = new THREE.Mesh( geometry, moonMaterial );
+    Sun.position.set(0, -spinRadius, 0);
+    Moon.position.set(0, spinRadius, 0)
 
     // parent
     parent = new THREE.Object3D();
-    scene.add( parent );
 
     // pivots
     var pivot1 = new THREE.Object3D();
     var pivot2 = new THREE.Object3D();
     var pivot3 = new THREE.Object3D();
     var pivot4 = new THREE.Object3D();
-    parent.add( pivot1 );
-    parent.add( pivot2 );
-    parent.add( pivot3 );
-    parent.add( pivot4 );
-
-    // mesh
-    var Sun = new THREE.Mesh( geometry, material );
-    var Moon = new THREE.Mesh( geometry, moonMaterial );
-
-
-    Sun.position.set(0, -spinRadius, 0);
-    Moon.position.set(0, spinRadius, 0)
+    
     pivot1.add( Sun );
     pivot2.add( Moon );
     pivot3.add( sunLight );
     pivot4.add( moonLight );
-    parent.position.y = -boxSize/2;
+
+    parent.add( pivot1 );
+    parent.add( pivot2 );
+    parent.add( pivot3 );
+    //parent.add( pivot4 );
+
+    scene.add( parent );
 
 
     ///////
@@ -300,7 +294,7 @@ $(document).ready(function(){
     //fog//
     ///////
 
-    scene.fog = new THREE.FogExp2( 0xffffff, 0.00001 );
+    scene.fog = new THREE.FogExp2( 0xAAAAAA, 0.00001 );
 
     //////////
     //ground//
@@ -386,7 +380,8 @@ $(document).ready(function(){
     var params = {
         Hours: hours,
         Minutes: minutes,
-        SpeedUp: speedUp
+        SpeedUp: speedUp,
+        Seed: seed
     };
 
     gui.add(params, 'SpeedUp').onFinishChange(function(){
@@ -403,6 +398,12 @@ $(document).ready(function(){
       manual = true;
       sky.render({hours:params.Hours, minutes:params.Minutes});
       minutes = params.Minutes;
+    });
+
+    gui.add(params, 'Seed').min(0).max(1).step(0.01).onFinishChange(function(){
+      seed = params.Seed;
+      scene.remove(terrain);
+      terrain_init();
     });
 
     ///////////
