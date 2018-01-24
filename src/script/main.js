@@ -1,19 +1,20 @@
 import '../scss/reset.scss';
 import '../scss/main.scss';
+import 'three';
+import 'three/OrbitControls';
+
+import dat from 'dat.gui/build/dat.gui.js'
+import Stats from './lib/Stats.js';
+import RendererStats from './lib/threex.rendererstats.js';
+
 import './sky.js';
+import './terrain.js';
 
 import grass from "../img/grass.png";
 import moon from "../img/moon.jpg";
 
-import dat from 'dat.gui/build/dat.gui.js'
-import Stats from './Stats.js';
-import ImprovedNoise from './ImprovedNoise.js';
-
-import 'three';
-import 'three/OrbitControls';
-
-var scene, camera, renderer, controls, stats, sky;
-var boxSize = 3000;
+var scene, camera, renderer, controls, stats, sky, rendererStats;
+var boxSize = 5000;
 var planeY = -boxSize/2 ;
 var now, hours, minutes, lastMinute;
 var parent, sunLight, moonLight, spinRadius = boxSize;
@@ -26,103 +27,7 @@ var originCube;
 var manual = false, speedUp = true;
 var loader = new THREE.TextureLoader();
 var worldWidth = boxSize, worldDepth = boxSize;
-var cubeSize = 100, terrainMaxHeight = 5;
-var seed = 0.0, terrain;
-
-function terrain_init(){
-
-    var plane_geometry = new THREE.Geometry();
-
-    var texture = new THREE.TextureLoader().load( grass );
-    // texture.magFilter = THREE.NearestFilter;
-    // texture.minFilter = THREE.LinearMipMapLinearFilter;
-    texture.format = THREE.RGBFormat;
-    texture.minFilter = THREE.LinearFilter;
-    texture.magFilter = THREE.LinearFilter;
-
-    var cube = cube_init(texture);
-    var height = generateHeight();
-    for (var i = 0 ; i < worldWidth/cubeSize ; i++){
-      for (var j = 0 ; j < worldDepth/cubeSize ; j++){
-        var y = height[ i * worldDepth + j ];
-        cube.position.set(i * cubeSize, y, j * cubeSize);
-        cube.updateMatrix();
-        plane_geometry.merge(cube.geometry, cube.matrix);
-        for (var w = -terrainMaxHeight*cubeSize ; w < y ; w += cubeSize){
-          cube.position.set(i * cubeSize, w, j * cubeSize);
-          cube.updateMatrix();
-          plane_geometry.merge(cube.geometry, cube.matrix);
-        }
-      }
-    }
-    var material = new THREE.MeshLambertMaterial({ map: texture, side: THREE.FrontSide });
-    terrain = new THREE.Mesh( plane_geometry, material );
-    terrain.position.set(-worldWidth/ 2, -terrainMaxHeight*cubeSize/2, -worldDepth/ 2);
-    scene.add(terrain);
-    terrain.castShadow = true;
-    terrain.receiveShadow = true;
-}
-
-function generateHeight(){
-    var perlin = new ImprovedNoise();
-    var height = [];
-    var quality = 0.1;
-    for (var i = 0 ; i < worldWidth ; i++){
-        for (var j = 0 ; j < worldDepth ; j++){
-            height.push(Math.floor(perlin.noise(i * quality, j * quality, seed) * terrainMaxHeight) * cubeSize);
-        }
-    }
-    return height;
-}
-
-function cube_init(texture) {
-
-    var geometry = new THREE.CubeGeometry(cubeSize, cubeSize, cubeSize);
-    var material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.FrontSide });
-
-    var oneFourth = 1/4;
-    var half = 1/2;
-    var threeFourth = 3/4;
-
-    var oneThird = 1/3;
-    var twoThird = 2/3;
-
-    // each face has been shifted counter clockwise once
-    var face1 = [new THREE.Vector2(0, twoThird), new THREE.Vector2(0, oneThird), new THREE.Vector2(oneFourth, oneThird), new THREE.Vector2(oneFourth, twoThird)];
-    var face2 = [new THREE.Vector2(oneFourth, twoThird), new THREE.Vector2(oneFourth, oneThird), new THREE.Vector2(half, oneThird), new THREE.Vector2(half, twoThird)];
-    var top = [new THREE.Vector2(oneFourth, 1), new THREE.Vector2(oneFourth, twoThird), new THREE.Vector2(half, twoThird), new THREE.Vector2(half, 1)];
-    var bottom = [new THREE.Vector2(oneFourth, oneThird), new THREE.Vector2(oneFourth, 0), new THREE.Vector2(half, 0), new THREE.Vector2(half, oneThird)];
-    var face3 = [new THREE.Vector2(half, twoThird), new THREE.Vector2(half, oneThird), new THREE.Vector2(threeFourth, oneThird), new THREE.Vector2(threeFourth, twoThird)];
-    var face4 = [new THREE.Vector2(threeFourth, twoThird), new THREE.Vector2(threeFourth, oneThird), new THREE.Vector2(1, oneThird), new THREE.Vector2(1, twoThird)];
-
-    //This clears out any UV mapping that may have already existed on the cube.
-    geometry.faceVertexUvs[0] = [];
-
-    //UV mapping start
-    geometry.faceVertexUvs[0][0] = [face1[0], face1[1], face1[3]];
-    geometry.faceVertexUvs[0][1] = [face1[1], face1[2], face1[3]];
-
-    geometry.faceVertexUvs[0][2] = [face2[0], face2[1], face2[3]];
-    geometry.faceVertexUvs[0][3] = [face2[1], face2[2], face2[3]];
-
-    geometry.faceVertexUvs[0][4] = [top[0], top[1], top[3]];
-    geometry.faceVertexUvs[0][5] = [top[1], top[2], top[3]];
-
-    geometry.faceVertexUvs[0][6] = [bottom[0], bottom[1], bottom[3]];
-    geometry.faceVertexUvs[0][7] = [bottom[1], bottom[2], bottom[3]];
-
-    geometry.faceVertexUvs[0][8] = [face3[0], face3[1], face3[3]];
-    geometry.faceVertexUvs[0][9] = [face3[1], face3[2], face3[3]];
-
-    geometry.faceVertexUvs[0][10] = [face4[0], face4[1], face4[3]];
-    geometry.faceVertexUvs[0][11] = [face4[1], face4[2], face4[3]];
-
-    var cube = new THREE.Mesh(geometry, material);
-    cube.castShadow = true;
-    cube.receiveShadow = true;
-    return cube;
-
-}
+var terrain, cubeSize = 100, terrainMaxHeight = 5, seed = 0.0;
 
 $(document).ready(function(){
 
@@ -158,6 +63,12 @@ $(document).ready(function(){
     stats.domElement.style.top = '20px';
     stats.domElement.style.left = '20px';
     document.body.appendChild(stats.domElement);
+
+    rendererStats	= new RendererStats()
+    rendererStats.domElement.style.position	= 'absolute'
+    rendererStats.domElement.style.left	= '0px'
+    rendererStats.domElement.style.bottom	= '0px'
+    document.body.appendChild( rendererStats.domElement )
 
     ////////////
     //controls//
@@ -231,7 +142,7 @@ $(document).ready(function(){
     var pivot2 = new THREE.Object3D();
     var pivot3 = new THREE.Object3D();
     var pivot4 = new THREE.Object3D();
-    
+
     pivot1.add( Sun );
     pivot2.add( Moon );
     pivot3.add( sunLight );
@@ -243,12 +154,6 @@ $(document).ready(function(){
     //parent.add( pivot4 );
 
     scene.add( parent );
-
-
-    ///////
-    //sky//
-    ///////
-
 
     /////////
     //cluod//
@@ -300,7 +205,16 @@ $(document).ready(function(){
     //ground//
     //////////
 
-    terrain_init();
+    var terrainMesh = new THREE.Terrain({
+                                  worldWidth : worldWidth,
+                                  worldDepth : worldDepth,
+                                  texture : loader.load( grass )
+                                });
+    terrain = new THREE.Mesh( terrainMesh.geometry, terrainMesh.material );
+    terrain.position.set(- worldWidth / 2, - terrainMaxHeight * cubeSize / 2, - worldDepth / 2);
+    scene.add(terrain);
+    terrain.castShadow = true;
+    terrain.receiveShadow = true;
 
     //////////////
     //originCube//
@@ -321,40 +235,6 @@ $(document).ready(function(){
     //////////
 
     sky = new THREE.Sky({side:THREE.FrontSide});
-    var skyMesh1 = new THREE.Mesh(
-      new THREE.PlaneBufferGeometry(boxSize, boxSize, 1, 1),
-      sky.material
-    );
-    skyMesh1.position.set(boxSize/2, 0, 0);
-    skyMesh1.rotation.y = -Math.PI/2;
-
-    var skyMesh2 = new THREE.Mesh(
-      new THREE.PlaneBufferGeometry(boxSize, boxSize, 1, 1),
-      sky.material
-    );
-    skyMesh2.position.set(0, 0, boxSize/2);
-    skyMesh2.rotation.y = Math.PI;
-
-    var skyMesh3 = new THREE.Mesh(
-      new THREE.PlaneBufferGeometry(boxSize, boxSize, 1, 1),
-      sky.material
-    );
-    skyMesh3.position.set(-boxSize/2, 0, 0);
-    skyMesh3.rotation.y = Math.PI/2;
-
-    var skyMesh4 = new THREE.Mesh(
-      new THREE.PlaneBufferGeometry(boxSize, boxSize, 1, 1),
-      sky.material
-    );
-    skyMesh4.position.set(0, 0, -boxSize/2);
-
-    var skyBox = new THREE.Group();
-    skyBox.add( skyMesh1 );
-    skyBox.add( skyMesh2 );
-    skyBox.add( skyMesh3 );
-    skyBox.add( skyMesh4 );
-    //scene.add(skyBox);
-    skyBox.rotation.x = Math.PI;
 
     //skysphere
     var skyBox = new THREE.Mesh(
@@ -401,9 +281,9 @@ $(document).ready(function(){
     });
 
     gui.add(params, 'Seed').min(0).max(1).step(0.01).onFinishChange(function(){
-      seed = params.Seed;
+      //seed = params.Seed;
       scene.remove(terrain);
-      terrain_init();
+      //terrain_init();
     });
 
     ///////////
@@ -433,6 +313,7 @@ $(document).ready(function(){
         renderer.render(scene, camera);
         controls.update();
         stats.update();
+        rendererStats.update(renderer);
         // console.log("textures"+renderer.info.memory.textures)
         // console.log("geometry"+renderer.info.memory.geometries)
         // console.log("Calls: "   + renderer.info.render.calls);
