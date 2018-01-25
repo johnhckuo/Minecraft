@@ -14,14 +14,15 @@ import grass from "../img/grass.png";
 import moon from "../img/moon.jpg";
 
 var scene, camera, renderer, controls, stats, sky, rendererStats;
-var boxSize = 5000;
+var boxSize = 900;
 var now, hours, minutes, lastMinute;
-var parent, sunLight, moonLight, spinRadius = boxSize;
+var parent, sunLight, moonLight, spinRadius = boxSize, lightOffset = 0.5, PI15 = Math.PI * 1.5, PI05 = Math.PI * 0.5;
 var starParticle;
 var manual = false, speedUp = true;
 var loader = new THREE.TextureLoader();
 var worldWidth = boxSize, worldDepth = boxSize;
-var terrain, cubeSize = 100, terrainMaxHeight = 3, seed = 0.0;
+var worldHalfWidth = worldWidth/2, worldHalfDepth = worldDepth / 2;
+var terrain, cubeSize = 30, terrainMaxHeight = 3, seed = 0.0;
 
 init();
 
@@ -33,11 +34,9 @@ function init(){
     //camera//
     //////////
 
-    camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 100, 20000 );
+    camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 50, 20000 );
     camera.position.z = -1000;
     camera.position.y = 1000;
-   // camera.position.y = -boxSize/2;
-
 
     ////////////
     //renderer//
@@ -47,7 +46,7 @@ function init(){
     renderer.setSize( window.innerWidth, window.innerHeight );
     renderer.setClearColor(0xffffff, 1);
     renderer.shadowMap.enabled = true;
-    renderer.shadowMapSoft = true;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
     document.body.appendChild( renderer.domElement );
 
     ////////
@@ -84,22 +83,36 @@ function init(){
     ////////////
 
     sunLight = new THREE.DirectionalLight(0xffffff, 1);
+
     sunLight.position.set(0, -spinRadius, 0);
+    var lightRange = Math.sqrt(worldHalfWidth * worldHalfWidth + worldHalfDepth * worldHalfDepth);
+    var lightQuality = 512;
 
     sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = 512;
-    sunLight.shadow.mapSize.height = 512;
+    sunLight.shadow.mapSize.width = lightQuality;
+    sunLight.shadow.mapSize.height = lightQuality;
     sunLight.shadow.camera.near = boxSize /2 ;    
-    sunLight.shadow.camera.far = boxSize * 1.5;  
+    sunLight.shadow.camera.far = boxSize * 2;  
 
-    var sunlightRange = boxSize/2;
-    sunLight.shadow.camera.left = -sunlightRange;
-    sunLight.shadow.camera.right = sunlightRange;
-    sunLight.shadow.camera.top = sunlightRange;
-    sunLight.shadow.camera.bottom = -sunlightRange;
+    sunLight.shadow.camera.left = -lightRange;
+    sunLight.shadow.camera.right = lightRange;
+    sunLight.shadow.camera.top = lightRange;
+    sunLight.shadow.camera.bottom = -lightRange;
 
-    var helper = new THREE.CameraHelper( sunLight.shadow.camera );
-    scene.add( helper );
+    moonLight = new THREE.DirectionalLight(0x081640, 1.0);
+    moonLight.position.set(0, spinRadius, 0);
+
+    moonLight.castShadow = true;
+    moonLight.shadow.mapSize.width = lightQuality;
+    moonLight.shadow.mapSize.height = lightQuality;
+    moonLight.shadow.camera.near = boxSize /2 ;    
+    moonLight.shadow.camera.far = boxSize * 2;  
+
+    moonLight.shadow.camera.left = -lightRange;
+    moonLight.shadow.camera.right = lightRange;
+    moonLight.shadow.camera.top = lightRange;
+    moonLight.shadow.camera.bottom = -lightRange;
+    
     ////////////
     //sun&moon//
     ////////////
@@ -116,6 +129,16 @@ function init(){
     parent.add( Sun );
     parent.add( Moon );
     parent.add( sunLight );
+    parent.add( moonLight );
+
+    parent.rotation.y = Math.PI * 1.25;
+
+
+    now = new Date();
+    hours = now.getHours();
+    minutes = now.getMinutes();
+
+    sunUpdate();
 
     scene.add( parent );
 
@@ -173,7 +196,8 @@ function init(){
                                   worldWidth : worldWidth,
                                   worldDepth : worldDepth,
                                   texture : loader.load( grass ),
-                                  terrainMaxHeight : terrainMaxHeight
+                                  terrainMaxHeight : terrainMaxHeight,
+                                  cubeSize : cubeSize
                                 });
     terrain = new THREE.Mesh( terrainMesh.geometry, terrainMesh.material );
     terrain.position.set(- worldWidth / 2, - terrainMaxHeight * cubeSize / 2, - worldDepth / 2);
@@ -203,10 +227,6 @@ function init(){
     var gui = new dat.GUI({
         height : 5 * 32 - 1
     });
-
-    now = new Date();
-    hours = now.getHours();
-    minutes = now.getMinutes();
 
     var params = {
         Hours: hours,
@@ -247,12 +267,14 @@ function init(){
         var delta = clock.getDelta();
 
         if (speedUp){
-          minutes = minutes+1;
-          if (minutes >= 60){
-            hours = (hours+1)%24;
-            minutes = 0;
-          }
-          sky.render({hours:hours, minutes:minutes});
+            minutes = minutes+1;
+            if (minutes >= 60){
+                hours = (hours+1)%24;
+                minutes = 0;
+            }
+            gui.__controllers[1].setValue(hours);
+            gui.__controllers[2].setValue(minutes);
+            sky.render({hours:hours, minutes:minutes});
         }else if (!manual){
             hours = now.getHours();
             minutes = now.getMinutes();
@@ -277,6 +299,24 @@ function sunUpdate(){
 
     var timeSplice = 2*Math.PI/1440;
     parent.rotation.z = timeSplice * (hours*60 + minutes);
+
+    if ((parent.rotation.z < PI15 + lightOffset) && (parent.rotation.z > PI15 - lightOffset)){
+        var lightIntensity = ((PI15 + lightOffset) - parent.rotation.z) / (lightOffset * 2);
+        sunLight.intensity = lightIntensity >= 1 ? 1 : lightIntensity;
+        moonLight.intensity = 1 - (lightIntensity >= 1 ? 1 : lightIntensity);
+    }else if ((parent.rotation.z < PI05 + lightOffset) && (parent.rotation.z > PI05 - lightOffset)){
+        var lightIntensity = ((PI05 + lightOffset) - parent.rotation.z) / (lightOffset * 2);
+        sunLight.intensity = 1 - (lightIntensity >= 1 ? 1 : lightIntensity);
+        moonLight.intensity = lightIntensity >= 1 ? 1 : lightIntensity;
+    }
+
+    if ((parent.rotation.z < PI15) && (parent.rotation.z > PI05)){
+        sunLight.castShadow = true;
+        moonLight.castShadow = false;
+    }else{
+        sunLight.castShadow = false;
+        moonLight.castShadow = true;
+    }
 
 }
 

@@ -73,8 +73,6 @@ THREE.Terrain = function(options){
 	geometry.faceVertexUvs[0][11] = [face4[1], face4[2], face4[3]];
 
 	var cube = new THREE.Mesh(geometry, material);
-	cube.castShadow = true;
-	cube.receiveShadow = true;
 
 	/* ----------------
 	- generate height -
@@ -93,7 +91,7 @@ THREE.Terrain = function(options){
 	/* ---------------
 	- render terrain -
 	--------------- */
-	
+
 	for (var i = 0 ; i < cubeNumberX ; i++){
 	  for (var j = 0 ; j < cubeNumberY ; j++){
 	    var y = this.height[ i * cubeNumberY + j ];
