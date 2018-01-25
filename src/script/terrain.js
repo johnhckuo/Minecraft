@@ -1,14 +1,15 @@
 THREE.Terrain = function(options){
+
 	THREE.Object3D.call(this);
 	this.name = "terrain_" + this.id;
 	options = options || {};
 
 	function params(value, defaultValue){
-    	return value !== undefined ? value : defaultValue;
-  }
+		return value !== undefined ? value : defaultValue;
+	}
 
-  this.worldWidth = params(options.worldWidth, 1000);
-  this.worldDepth = params(options.worldDepth, 1000);
+	this.worldWidth = params(options.worldWidth, 1000);
+	this.worldDepth = params(options.worldDepth, 1000);
 	this.seed = params(options.seed, 0.0);
 	this.terrainMaxHeight = params(options.terrainMaxHeight, 5);
 	this.cubeSize = params(options.cubeSize, 100);
@@ -16,7 +17,7 @@ THREE.Terrain = function(options){
 	this.texture = params(options.texture, new THREE.Texture());
 	this.height = [];
 
-  this.mesh = new THREE.Object3D();
+	this.mesh = new THREE.Object3D();
 
 	// texture.magFilter = THREE.NearestFilter;
 	// texture.minFilter = THREE.LinearMipMapLinearFilter;
@@ -80,8 +81,11 @@ THREE.Terrain = function(options){
 	---------------- */
 
 	var perlin = new ImprovedNoise();
-	for (var i = 0 ; i < this.worldWidth ; i++){
-			for (var j = 0 ; j < this.worldDepth ; j++){
+	var cubeNumberX = this.worldWidth / this.cubeSize;
+	var cubeNumberY = this.worldDepth / this.cubeSize;
+
+	for (var i = 0 ; i < cubeNumberX ; i++){
+			for (var j = 0 ; j < cubeNumberY ; j++){
 					this.height.push(Math.floor(perlin.noise(i * this.quality, j * this.quality, this.seed) * this.terrainMaxHeight) * this.cubeSize);
 			}
 	}
@@ -89,10 +93,10 @@ THREE.Terrain = function(options){
 	/* ---------------
 	- render terrain -
 	--------------- */
-
-	for (var i = 0 ; i < this.worldWidth/this.cubeSize ; i++){
-	  for (var j = 0 ; j < this.worldDepth/this.cubeSize ; j++){
-	    var y = this.height[ i * this.worldDepth + j ];
+	
+	for (var i = 0 ; i < cubeNumberX ; i++){
+	  for (var j = 0 ; j < cubeNumberY ; j++){
+	    var y = this.height[ i * cubeNumberY + j ];
 	    cube.position.set(i * this.cubeSize, y, j * this.cubeSize);
 	    cube.updateMatrix();
 	    this.geometry.merge(cube.geometry, cube.matrix);
@@ -105,8 +109,8 @@ THREE.Terrain = function(options){
 	}
 	this.material = new THREE.MeshLambertMaterial({ map: this.texture, side: THREE.FrontSide });
 	this.terrain = new THREE.Mesh( this.geometry, this.material );
-	console.log("ffff")
 }
+
 THREE.Terrain.prototype = Object.create(THREE.Object3D.prototype);
 
 // http://mrl.nyu.edu/~perlin/noise/

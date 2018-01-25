@@ -51,11 +51,11 @@ THREEx.RendererStats	= function (){
 			lastTime	= Date.now()
 
 			var i	= 0;
-			msTexts[i++].textContent = "== Memory =====";
+			msTexts[i++].textContent = "-Memory-";
 			msTexts[i++].textContent = "Geometries: "+webGLRenderer.info.memory.geometries;
 			msTexts[i++].textContent = "Textures: "	+ webGLRenderer.info.memory.textures;
 
-			msTexts[i++].textContent = "== Render =====";
+			msTexts[i++].textContent = "-Render-";
 			msTexts[i++].textContent = "Calls: "	+ webGLRenderer.info.render.calls;
 			msTexts[i++].textContent = "Vertices: "	+ webGLRenderer.info.render.vertices;
 			msTexts[i++].textContent = "Faces: "	+ webGLRenderer.info.render.faces;
