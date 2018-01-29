@@ -1,7 +1,7 @@
-# Minecraft Day/Night Simulator
-Simulate Day/Night Transition in Minecraft
+# Minecraft
+Simulate terrain generation & day/night transition in Minecraft
 <p align=center>
-<img src="https://github.com/johnhckuo/Day-and-Night/blob/master/cover.png?raw=true">
+<img src="https://github.com/johnhckuo/Minecraft/blob/master/cover.png?raw=true">
 </p>
 <p align=center>
 <a target="_blank" href="https://opensource.org/licenses/MIT" title="License: MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg"></a>
@@ -12,12 +12,12 @@ Simulate Day/Night Transition in Minecraft
 
 ```bash
 # clone repository
-git clone https://github.com/johnhckuo/Day-and-Night.git
-cd Day-and-Night
+git clone https://github.com/johnhckuo/Minecraft.git
+cd Minecraft
 
 # install required packages and dependencies
 npm install
 
 # build and run locally
-npm run start
+npm run dev
 ```
