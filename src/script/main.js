@@ -5,7 +5,6 @@ import 'three/OrbitControls';
 
 import dat from 'dat.gui/build/dat.gui.js'
 import Stats from './lib/Stats.js';
-import RendererStats from './lib/threex.rendererstats.js';
 
 import './sky.js';
 import './terrain.js';
@@ -13,7 +12,7 @@ import './terrain.js';
 import grass from "../img/grass.png";
 import moon from "../img/moon.jpg";
 
-var scene, camera, renderer, controls, stats, sky, rendererStats;
+var scene, camera, renderer, controls, stats, sky;
 var boxSize = 900;
 var now, hours, minutes, lastMinute;
 var parent, sunLight, moonLight, spinRadius = boxSize, lightOffset = 0.5, PI15 = Math.PI * 1.5, PI05 = Math.PI * 0.5;
@@ -35,8 +34,10 @@ function init(){
     //////////
 
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 50, 20000 );
-    camera.position.z = -1000;
-    camera.position.y = 1000;
+    camera.position.z = 300;
+    camera.position.y = 100;
+    camera.position.x = -300;
+
 
     ////////////
     //renderer//
@@ -58,12 +59,6 @@ function init(){
     stats.domElement.style.top = '20px';
     stats.domElement.style.left = '20px';
     document.body.appendChild(stats.domElement);
-
-    rendererStats	= new RendererStats()
-    rendererStats.domElement.style.position	= 'absolute'
-    rendererStats.domElement.style.left	= '0px'
-    rendererStats.domElement.style.bottom	= '0px'
-    document.body.appendChild( rendererStats.domElement )
 
     ////////////
     //controls//
@@ -117,10 +112,10 @@ function init(){
     //sun&moon//
     ////////////
 
-    var geometry = new THREE.SphereGeometry( cubeSize * 2, 16, 16 );
+    var geometry = new THREE.SphereGeometry( cubeSize, 16, 16 );
 
     var Sun = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial( { color: 0xFFFF33, vertexColors: THREE.FaceColors } ) );
-    var Moon = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( {map: loader.load(moon)} ) );
+    var Moon = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial( {map: loader.load(moon)} ) );
     Sun.position.set(0, -spinRadius, 0);
     Moon.position.set(0, spinRadius, 0)
 
@@ -252,9 +247,21 @@ function init(){
     });
 
     gui.add(params, 'Seed').min(0).max(1).step(0.01).onFinishChange(function(){
-      //seed = params.Seed;
-      scene.remove(terrain);
-      //terrain_init();
+        seed = params.Seed;
+        scene.remove(terrain);
+        var terrainMesh = new THREE.Terrain({
+                                      worldWidth : worldWidth,
+                                      worldDepth : worldDepth,
+                                      texture : loader.load( grass ),
+                                      terrainMaxHeight : terrainMaxHeight,
+                                      cubeSize : cubeSize,
+                                      seed: seed
+                                    });
+        terrain = new THREE.Mesh( terrainMesh.geometry, terrainMesh.material );
+        terrain.position.set(- worldWidth / 2, - terrainMaxHeight * cubeSize / 2, - worldDepth / 2);
+        scene.add(terrain);
+        terrain.castShadow = true;
+        terrain.receiveShadow = true;
     });
 
     ///////////
@@ -284,8 +291,6 @@ function init(){
         renderer.render(scene, camera);
         controls.update();
         stats.update();
-        rendererStats.update(renderer);
-
         sunUpdate();
 
     };
