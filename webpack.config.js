@@ -1,12 +1,14 @@
 var path = require('path');
 var Webpack = require("webpack");
-var ExtractTextPlugin = require('extract-text-webpack-plugin');
+//var ExtractTextPlugin = require('extract-text-webpack-plugin');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
-var CleanWebpackPlugin = require('clean-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
-var extractPlugin = new ExtractTextPlugin({
-   filename: 'bundle.css'
-});
+
+// var extractPlugin = new ExtractTextPlugin({
+//    filename: 'bundle.css'
+// });
 
 module.exports = {
   entry: [__dirname+'/src/script/main.js'],
@@ -18,14 +20,14 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: 'src/index.html'
     }),
-    extractPlugin,
-    new CleanWebpackPlugin(['dist']),
+    new CleanWebpackPlugin(),
     new Webpack.ProvidePlugin({
         'THREE': 'three'
-    })
+    }),
+    new MiniCssExtractPlugin()
   ],
   module: {
-    loaders: [
+    rules: [
         {
           test: /\.(gif|png|jpe?g|svg)$/i,
           use: [
@@ -43,18 +45,18 @@ module.exports = {
         {
             test: /\.css$/,
             use: [
+                MiniCssExtractPlugin.loader,
                 'style-loader',
                 'css-loader'
             ]
         },
         {
       			test: /\.scss$/,
-      			use: extractPlugin.extract({
-      			    use: [
+      			use: [
+                    MiniCssExtractPlugin.loader,
       			        'css-loader',
       			        'sass-loader'
       			    ]
-      			})
       	},
         {test: /\.jpg$/, use: 'url-loader?mimetype=image/jpg'},
         {test: /\.png$/, use: 'url-loader?mimetype=image/png'},
